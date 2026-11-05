@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ru" class="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>WordFlow — английский A1–B1</title>
+  <meta name="description" content="Изучение и практика английских слов с интервальным повторением" />
+  <meta name="theme-color" content="#0b1020" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="WordFlow" />
+
+  <!-- Тема применяется до отрисовки, чтобы не было «вспышки» -->
+  <script>
+    try {
+      var s = JSON.parse(localStorage.getItem('ew.settings.v1') || '{}');
+      var t = s.theme || 'dark';
+      if (t === 'system') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      document.documentElement.classList.toggle('dark', t === 'dark');
+    } catch (e) {}
+  </script>
+
+  <!-- Шрифт с кириллицей -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Manrope', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#eefbf6', 100: '#d5f5e8', 200: '#aeead4', 300: '#78d9b9',
+              400: '#40c09a', 500: '#1fa583', 600: '#13856b', 700: '#126a58',
+              800: '#125448', 900: '#11463d'
+            },
+            ink: { 950: '#0b1020', 900: '#111830', 850: '#162038', 800: '#1c2742', 700: '#2a3654' }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Иконки Lucide (CDN) -->
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-900 dark:bg-ink-950 dark:text-slate-100 font-sans antialiased">
+
+  <!-- Верхняя панель -->
+  <header class="sticky top-0 z-30 border-b border-slate-200/70 dark:border-white/5 bg-slate-50/80 dark:bg-ink-950/80 backdrop-blur safe-top">
+    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center gap-3">
+      <a href="#/dict" class="flex items-center gap-2 font-extrabold tracking-tight text-lg">
+        <span class="w-8 h-8 rounded-xl bg-brand-500 text-white grid place-items-center"><i data-lucide="languages" class="w-4 h-4"></i></span>
+        WordFlow
+      </a>
+      <nav class="hidden md:flex items-center gap-1 ml-6" id="topNav"></nav>
+      <div class="ml-auto flex items-center gap-1">
+        <button id="quietBtn" class="icon-btn" title="Тихий режим" aria-label="Тихий режим"><i data-lucide="headphones"></i></button>
+        <button id="syncBtn" class="icon-btn hidden" title="Синхронизировать" aria-label="Синхронизировать"><i data-lucide="cloud"></i></button>
+        <button id="themeBtn" class="icon-btn" title="Сменить тему" aria-label="Сменить тему"><i data-lucide="moon-star"></i></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Основная область -->
+  <main id="view" class="max-w-5xl mx-auto px-4 pt-5 pb-28 md:pb-10"></main>
+
+  <!-- Нижняя навигация (телефон) -->
+  <nav id="bottomNav" class="md:hidden fixed bottom-0 inset-x-0 z-30 border-t border-slate-200 dark:border-white/5 bg-white/90 dark:bg-ink-900/90 backdrop-blur safe-bottom grid grid-cols-6"></nav>
+
+  <!-- Модальные окна и уведомления -->
+  <div id="modalRoot"></div>
+  <div id="toastRoot" class="fixed z-50 left-1/2 -translate-x-1/2 bottom-24 md:bottom-6 flex flex-col items-center gap-2 pointer-events-none"></div>
+
+  <script src="config.js"></script>
+  <script src="data/base.js"></script>
+  <script src="data/sentences.js"></script>
+  <script src="data/texts.js"></script>
+  <script src="app.js"></script>
+  <script src="practice.js"></script>
+  <script src="cloud.js"></script>
+</body>
+</html>
