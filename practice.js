@@ -74,6 +74,10 @@ const sentPlain = markup => parseSent(markup).map(p => p.text).join('');
 
 function roleColor(r) { return (ROLES[r] || [])[3] || '#64748b'; }
 function roleName(r) { return (ROLES[r] || [r])[store.settings.lang === 'ua' ? 1 : 0]; }
+/** Українська версія поля уроку/тексту (data/ua.js), якщо обрано UA */
+const isUA = () => store.settings.lang === 'ua';
+const loc = (o, k) => (isUA() && o && o.ua && o.ua[k] != null) ? o.ua[k] : o[k];
+function roleDesc(r) { const x = ROLES[r] || []; return (isUA() && x[4]) || x[2] || ''; }
 
 /** Цветной разбор: каждая часть подписана своей ролью */
 function sentBreakdown(markup) {
@@ -176,8 +180,8 @@ function renderLessonList(root) {
         return `<button class="card p-4 text-left hover:border-brand-400 transition min-w-0" data-lesson="${l.id}">
           <div class="flex items-start gap-3">
             <div class="flex-1 min-w-0">
-              <div class="font-extrabold leading-snug">${esc(l.title)}</div>
-              <div class="text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">${esc(l.sub)}</div>
+              <div class="font-extrabold leading-snug">${esc(loc(l, 'title'))}</div>
+              <div class="text-sm text-slate-500 dark:text-slate-400 mt-0.5 truncate">${esc(loc(l, 'sub'))}</div>
             </div>
             ${p ? `<span class="shrink-0 text-xs font-bold px-2 py-1 rounded-full ${p.best >= 80 ? 'bg-brand-500/15 text-brand-600 dark:text-brand-300' : 'bg-amber-500/15 text-amber-600 dark:text-amber-300'}">${p.best}%</span>` : '<span class="shrink-0 text-xs text-slate-400">новый</span>'}
           </div>
@@ -207,21 +211,21 @@ function renderLesson(view) {
     <div class="flex items-start gap-3">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2">${levelBadge(l.level)}${p ? `<span class="text-xs font-bold text-brand-500">лучший результат ${p.best}%</span>` : ''}</div>
-        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">${esc(l.title)}</h1>
-        <p class="text-slate-500 dark:text-slate-400 mt-1">${esc(l.sub)}</p>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">${esc(loc(l, 'title'))}</h1>
+        <p class="text-slate-500 dark:text-slate-400 mt-1">${esc(loc(l, 'sub'))}</p>
       </div>
     </div>
 
     <section class="card p-5 mt-5">
       <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Схема</div>
-      <div class="mt-2 space-y-1.5">${l.formula.map(f => `<div class="font-mono text-[15px] font-semibold leading-relaxed">${formulaHtml(f)}</div>`).join('')}</div>
-      <div class="mt-4 space-y-3 text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">${l.explain.map(t => `<p>${t}</p>`).join('')}</div>
+      <div class="mt-2 space-y-1.5">${loc(l, 'formula').map(f => `<div class="font-mono text-[15px] font-semibold leading-relaxed">${formulaHtml(f)}</div>`).join('')}</div>
+      <div class="mt-4 space-y-3 text-[15px] leading-relaxed text-slate-700 dark:text-slate-300">${loc(l, 'explain').map(t => `<p>${t}</p>`).join('')}</div>
     </section>
 
     <button class="btn btn-primary btn-lg w-full mt-4" id="practiceBtn"><i data-lucide="play"></i>Практика: ${l.s.length} упражнений</button>
 
     <h2 class="mt-6 font-extrabold flex items-center gap-2"><i data-lucide="scan-text" class="text-brand-500"></i>Разбор предложений</h2>
-    <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">${usedRoles.map(r => `<span class="inline-flex items-center gap-1" title="${esc(ROLES[r][2])}"><span class="w-2.5 h-2.5 rounded-sm" style="background:${roleColor(r)}"></span>${esc(roleName(r))} — <span class="text-slate-400">${esc(ROLES[r][2])}</span></span>`).join('')}</div>
+    <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs">${usedRoles.map(r => `<span class="inline-flex items-center gap-1" title="${esc(roleDesc(r))}"><span class="w-2.5 h-2.5 rounded-sm" style="background:${roleColor(r)}"></span>${esc(roleName(r))} — <span class="text-slate-400">${esc(roleDesc(r))}</span></span>`).join('')}</div>
     <div class="mt-3 space-y-2">
       ${l.s.map(s => `<div class="card p-4 flex gap-3">
         <button class="icon-btn !w-9 !h-9 shrink-0" data-say="${esc(sentPlain(s[0]))}" aria-label="Озвучить"><i data-lucide="volume-2"></i></button>
@@ -253,7 +257,7 @@ function startLessonRun(l) {
     if (t === 'gap' && (!gapPart || !(s[3] || []).length)) t = 'build';
     return { kind: 'lesson', t, s };
   });
-  practice.run = { title: l.title, lessonId: l.id, items, pos: 0, answers: 0, correct: 0, started: Date.now(), wrong: [] };
+  practice.run = { title: loc(l, 'title'), lessonId: l.id, items, pos: 0, answers: 0, correct: 0, started: Date.now(), wrong: [] };
   practice.ex = null;
   render(); window.scrollTo(0, 0);
 }
@@ -533,7 +537,7 @@ function renderTextList(root) {
           <div class="w-11 h-11 rounded-2xl ${p ? 'bg-brand-500 text-white' : 'bg-brand-500/15 text-brand-500'} grid place-items-center shrink-0"><i data-lucide="${p ? 'check' : topic ? topic[2] : 'book-open'}"></i></div>
           <div class="flex-1 min-w-0">
             <div class="font-extrabold truncate">${esc(t.title)}</div>
-            <div class="text-sm text-slate-500 dark:text-slate-400 truncate">${esc(t.ru)}</div>
+            <div class="text-sm text-slate-500 dark:text-slate-400 truncate">${esc(isUA() && t.ua ? t.ua.name : t.ru)}</div>
             <div class="text-xs text-slate-400 mt-1">${n} ${plural(n, 'слово', 'слова', 'слов')} · ~${Math.max(1, Math.round(n / 90))} мин${p ? ` · <span class="text-brand-500 font-bold">вопросы ${p.score}/${p.total}</span>` : ''}</div>
           </div>
         </button>`;
@@ -590,7 +594,7 @@ function lookupWord(raw, t) {
   for (const c of cands) if (idx.has(c)) return { b: idx.get(c), form: c };
   // свои слова из словаря
   for (const c of cands) { const w = store.words.find(x => !x.base_id && x.word.toLowerCase() === c); if (w) return { own: w }; }
-  const g = t?.gloss || {};
+  const g = (t && loc(t, 'gloss')) || {};
   for (const c of [raw.toLowerCase(), ...cands]) if (g[c]) return { gloss: g[c], form: c };
   return null;
 }
@@ -606,7 +610,7 @@ function wrapWords(par) {
 function renderReader(view) {
   const t = textById(practice.text);
   if (!t) { practice.text = null; return renderPractice(view); }
-  const pars = t.text.split(/\n\s*\n/), trs = (t.tr || '').split(/\n\s*\n/);
+  const pars = t.text.split(/\n\s*\n/), trs = (loc(t, 'tr') || '').split(/\n\s*\n/);
   const p = pstore.get().t[t.id];
   const n = textWords(t);
   view.innerHTML = `
@@ -614,7 +618,7 @@ function renderReader(view) {
       <button class="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-brand-500 mb-2" id="backBtn"><i data-lucide="chevron-left"></i>Тексты</button>
       <div class="flex items-center gap-2">${levelBadge(t.level)}<span class="text-xs text-slate-400">${n} ${plural(n, 'слово', 'слова', 'слов')} · ~${Math.max(1, Math.round(n / 90))} мин</span>${p ? `<span class="text-xs font-bold text-brand-500">прочитано · ${p.score}/${p.total}</span>` : ''}</div>
       <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">${esc(t.title)}</h1>
-      <p class="text-slate-500 dark:text-slate-400">${esc(t.ru)}</p>
+      <p class="text-slate-500 dark:text-slate-400">${esc(isUA() && t.ua ? t.ua.name : t.ru)}</p>
       <div class="mt-4 flex flex-wrap gap-2">
         <button class="btn btn-ghost !h-10" id="listenBtn"><i data-lucide="${readAloud.on ? 'square' : 'volume-2'}"></i>${readAloud.on ? 'Стоп' : 'Слушать текст'}</button>
         <button class="btn btn-ghost !h-10" id="trAllBtn"><i data-lucide="languages"></i>${practice.showTr ? 'Скрыть перевод' : 'Показать перевод'}</button>
@@ -631,7 +635,6 @@ function renderReader(view) {
           </div>
         </div>`).join('')}
       </article>
-      ${store.settings.lang === 'ua' ? '<p class="text-xs text-slate-400 mt-2">Переклад текстів поки що російською; переклад окремих слів — українською.</p>' : ''}
 
       <h2 class="mt-7 font-extrabold flex items-center gap-2"><i data-lucide="circle-help" class="text-brand-500"></i>Вопросы к тексту</h2>
       <div id="quiz" class="mt-3 space-y-3"></div>

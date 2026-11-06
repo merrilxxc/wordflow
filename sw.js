@@ -1,9 +1,9 @@
 /* Service Worker WordFlow: офлайн-работа и быстрый запуск.
    При обновлении файлов приложения увеличьте номер версии ниже. */
-const VERSION = 'wordflow-v4';
+const VERSION = 'wordflow-v5';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './practice.js', './cloud.js', './config.js',
-  './data/base.js', './data/sentences.js', './data/texts.js', './manifest.json',
+  './data/base.js', './data/sentences.js', './data/texts.js', './data/ua.js', './manifest.json',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'
 ];
 const CDN_HOSTS = ['cdn.tailwindcss.com', 'unpkg.com', 'cdn.jsdelivr.net', 'fonts.googleapis.com', 'fonts.gstatic.com'];
