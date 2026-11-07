@@ -104,11 +104,16 @@ const cloud = {
     const { error } = await this.client.auth.signInWithOtp({ email, options: { emailRedirectTo: this.redirectUrl() } });
     if (error) throw new Error(cloudError(error));
   },
+  async google() {
+    const { error } = await this.client.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: this.redirectUrl() } });
+    if (error) throw new Error(cloudError(error));
+  },
   async signOut() { await this.client.auth.signOut(); this.user = null; }
 };
 
 function cloudError(e) {
   const m = String(e?.message || e || '');
+  if (/provider is not enabled|Unsupported provider/i.test(m)) return 'Вход через Google ещё не включён в Supabase (Authentication → Sign In / Providers → Google)';
   if (/Invalid login credentials/i.test(m)) return 'Неверный email или пароль';
   if (/Email not confirmed/i.test(m)) return 'Email не подтверждён — откройте письмо от Supabase и нажмите ссылку';
   if (/User already registered/i.test(m)) return 'Такой пользователь уже есть — нажмите «Войти»';
@@ -143,7 +148,11 @@ function renderCloudSection(root) {
   } else if (!cloud.user) {
     inner = `
       <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Войдите — и данные этого устройства объединятся с облаком. На другом устройстве войдите с тем же email.</p>
-      <form id="sbForm" class="mt-3 grid gap-2">
+      <button class="btn btn-ghost w-full mt-3 !h-12 !text-base font-bold" id="sbGoogle" type="button">
+        <svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.7 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 15.1 19 12 24 12c3.1 0 5.8 1.2 7.9 3.1l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/><path fill="#4CAF50" d="M24 44c5.2 0 9.9-2 13.4-5.2l-6.2-5.2C29.2 35.1 26.7 36 24 36c-5.2 0-9.6-3.3-11.3-7.9l-6.5 5C9.5 39.6 16.2 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.2-4.1 5.6l6.2 5.2C37 39.2 44 34 44 24c0-1.3-.1-2.4-.4-3.5z"/></svg>
+        Войти через Google</button>
+      <div class="flex items-center gap-3 my-3 text-xs text-slate-400"><span class="h-px flex-1 bg-slate-500/20"></span>или по email<span class="h-px flex-1 bg-slate-500/20"></span></div>
+      <form id="sbForm" class="grid gap-2">
         <input id="sbEmail" type="email" class="input" placeholder="Email" autocomplete="email" required value="${esc(s.sbEmail || '')}" />
         <input id="sbPass" type="password" class="input" placeholder="Пароль (не меньше 6 символов)" autocomplete="current-password" />
         <div class="grid grid-cols-2 gap-2">
@@ -168,7 +177,7 @@ function renderCloudSection(root) {
         <input type="checkbox" id="sbAuto" class="w-5 h-5 accent-brand-500" ${s.autoSync ? 'checked' : ''}></label>`;
   }
   root.innerHTML = `<section class="card p-5 mt-5 ${cloud.active() ? 'border-brand-500/40' : ''}">
-    <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="cloud" class="text-brand-500"></i>Облако WordFlow (вход по email)
+    <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="cloud" class="text-brand-500"></i>Облако WordFlow (вход)
       <span class="ml-auto text-[11px] font-bold px-2 py-0.5 rounded-full ${cloud.active() ? 'bg-brand-500/15 text-brand-600 dark:text-brand-300' : 'bg-slate-500/10 text-slate-500'}">${cloud.active() ? 'подключено' : 'рекомендуется'}</span></h2>
     ${inner}</section>`;
   icons();
@@ -189,6 +198,11 @@ function renderCloudSection(root) {
   if (retry) retry.onclick = () => { cloud.error = ''; renderCloudSection(root); cloud.init(); };
   const reset = $('#sbReset', root);
   if (reset) reset.onclick = () => { s.sbUrl = ''; s.sbKey = ''; store.saveSettings(); cloud.client = null; renderCloudSection(root); };
+  const gBtn = $('#sbGoogle', root);
+  if (gBtn) gBtn.onclick = async () => {
+    gBtn.disabled = true;
+    try { await cloud.google(); } catch (e) { toast(e.message, 'error'); gBtn.disabled = false; }
+  };
   const form = $('#sbForm', root);
   if (form) {
     const go = async act => {

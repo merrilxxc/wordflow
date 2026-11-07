@@ -1,6 +1,6 @@
 /* Service Worker WordFlow: офлайн-работа и быстрый запуск.
    При обновлении файлов приложения увеличьте номер версии ниже. */
-const VERSION = 'wordflow-v6';
+const VERSION = 'wordflow-v7';
 const APP_SHELL = [
   './', './index.html', './styles.css', './app.js', './practice.js', './cloud.js', './config.js',
   './data/base.js', './data/sentences.js', './data/texts.js', './data/ua.js', './manifest.json',

@@ -85,6 +85,7 @@ const DEFAULT_SETTINGS = {
   mode: 'cycle',          // cycle — одно упражнение на слово по кругу; full — все 4 на каждое слово; random
   voice: '',              // имя голоса speechSynthesis
   rate: 0.9,              // скорость озвучки
+  volume: 0.6,            // громкость озвучки 0..1
   autoplay: true,         // озвучивать слово автоматически
   retryWrong: true,       // повторять ошибочные карточки в конце сессии
   sheetUrl: '',           // ссылка на Google Таблицу для импорта
@@ -721,6 +722,7 @@ const tts = {
       || this.voices.find(v => /en-US/i.test(v.lang) && /google|samantha|natural|aria|jenny/i.test(v.name))
       || this.voices.find(v => /en-US/i.test(v.lang)) || this.voices[0] || null;
   },
+  vol() { const v = store.settings.volume; return v == null ? 0.6 : Math.max(0, Math.min(1, +v)); },
   speak(text, rate) {
     if (!this.supported) { toast('Озвучка не поддерживается этим браузером', 'error'); return; }
     if (!text) return;
@@ -730,6 +732,7 @@ const tts = {
     if (v) u.voice = v;
     u.lang = v?.lang || 'en-US';
     u.rate = rate || store.settings.rate || 0.9;
+    u.volume = this.vol();
     speechSynthesis.speak(u);
   }
 };
@@ -759,6 +762,7 @@ function renderNav() {
 }
 
 function render() {
+  if (typeof closeWordTip === 'function') closeWordTip();
   renderNav();
   const view = $('#view');
   const fn = { course: renderCourse, dict: renderDict, train: renderTrain, practice: renderPractice, stats: renderStats, base: renderBase, settings: renderSettings }[route.name] || renderDict;
@@ -2552,6 +2556,9 @@ function renderSettings(view) {
       </label>
       <label class="block"><span class="text-sm font-bold">Скорость: <span id="rateVal">${s.rate}</span></span>
         <input type="range" id="rateRange" min="0.5" max="1.3" step="0.05" value="${s.rate}" class="w-full mt-2 accent-brand-500"></label>
+      <label class="block"><span class="text-sm font-bold">Громкость: <span id="volVal">${Math.round(tts.vol() * 100)}%</span></span>
+        <input type="range" id="volRange" min="0.05" max="1" step="0.05" value="${tts.vol()}" class="w-full mt-2 accent-brand-500">
+        <span class="text-xs text-slate-400">Работает в Chrome и Edge на компьютере. На некоторых телефонах браузер игнорирует эту настройку — тогда регулируйте громкость кнопками телефона.</span></label>
       <label class="flex items-center justify-between gap-4">
         <span class="text-sm font-bold">Автоматически озвучивать слово</span>
         <input type="checkbox" id="autoChk" class="w-5 h-5 accent-brand-500" ${s.autoplay ? 'checked' : ''}></label>
@@ -2582,6 +2589,8 @@ function renderSettings(view) {
   if (tts.supported) {
     $('#voiceSel').onchange = e => { s.voice = e.target.value; store.saveSettings(); tts.speak('Hello'); };
     $('#rateRange').oninput = e => { s.rate = +e.target.value; $('#rateVal').textContent = s.rate; store.saveSettings(); };
+    $('#volRange').oninput = e => { s.volume = +e.target.value; $('#volVal').textContent = Math.round(s.volume * 100) + '%'; store.saveSettings(); };
+    $('#volRange').onchange = () => tts.speak('Hello');
     $('#autoChk').onchange = e => { s.autoplay = e.target.checked; store.saveSettings(); };
     $('#testVoice').onclick = () => tts.speak('Practice makes perfect');
   }

@@ -166,3 +166,13 @@ mark.hl { background: rgb(31 165 131 / .2); color: inherit; border-radius: .3rem
 .tw { cursor: pointer; border-radius: .3rem; transition: background-color .12s; }
 .tw:hover { background: rgb(31 165 131 / .15); }
 .tw:active { background: rgb(31 165 131 / .3); }
+
+/* Подсказка перевода над словом (компьютер) */
+.tw.is-picked { background: rgb(31 165 131 / .3); }
+.word-tip { position: absolute; z-index: 45; width: 320px; max-width: calc(100vw - 16px); padding: .75rem .8rem;
+  background: #fff; color: #0f172a; border: 1px solid rgb(15 23 42 / .1); border-radius: 1rem;
+  box-shadow: 0 12px 32px rgb(0 0 0 / .18); font-size: 15px; line-height: 1.4; }
+.dark .word-tip { background: #1c2742; color: #f1f5f9; border-color: rgb(255 255 255 / .1); box-shadow: 0 12px 32px rgb(0 0 0 / .5); }
+.word-tip-arrow { position: absolute; width: 12px; height: 12px; background: inherit; border: inherit; transform: translateX(-50%) rotate(45deg); }
+.word-tip.is-above .word-tip-arrow { bottom: -7px; border-top: 0; border-left: 0; }
+.word-tip.is-below .word-tip-arrow { top: -7px; border-bottom: 0; border-right: 0; }

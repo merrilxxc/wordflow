@@ -584,18 +584,82 @@ function lemmaCandidates(raw) {
   if (w.endsWith('ed')) { add(w.slice(0, -2)); add(w.slice(0, -1)); if (/(.)\1ed$/.test(w)) add(w.slice(0, -3)); }
   if (w.endsWith('ing')) { add(w.slice(0, -3)); add(w.slice(0, -3) + 'e'); if (/(.)\1ing$/.test(w)) add(w.slice(0, -4)); }
   if (w.endsWith('er')) { add(w.slice(0, -2)); add(w.slice(0, -1)); if (/(.)\1er$/.test(w)) add(w.slice(0, -3)); }
-  if (w.endsWith('est')) { add(w.slice(0, -3)); add(w.slice(0, -2)); }
+  if (w.endsWith('est')) { add(w.slice(0, -3)); add(w.slice(0, -2)); if (/(.)\1est$/.test(w)) add(w.slice(0, -4)); }
+  if (w.endsWith('ier')) add(w.slice(0, -3) + 'y');
+  if (w.endsWith('iest')) add(w.slice(0, -4) + 'y');
+  if (w.endsWith('ily')) add(w.slice(0, -3) + 'y');
   if (w.endsWith('ly')) add(w.slice(0, -2));
+  if (w.endsWith('ves')) { add(w.slice(0, -3) + 'f'); add(w.slice(0, -3) + 'fe'); }
+  // американское написание → британское (в базе британское): color → colour, center → centre, realize → realise
+  for (const x of [...c]) {
+    if (/[^aeiou]or(s|ed|ing)?$/.test(x)) add(x.replace(/or(s|ed|ing)?$/, 'our$1'));
+    if (/[^aeiou]er$/.test(x)) add(x.replace(/er$/, 're'));
+    if (/iz(e|ed|es|ing)$/.test(x)) add(x.replace(/iz(e|ed|es|ing)$/, 'is$1'));
+    if (/og$/.test(x)) add(x + 'ue');
+    if (/am$/.test(x)) add(x + 'me');
+    if (/ense$/.test(x)) add(x.replace(/ense$/, 'ence'));
+  }
   return c;
 }
+
+/* Сокращённые формы: полная форма + перевод [ru, ua] */
+const CONTR = (() => {
+  const neg = { do: 'do', does: 'does', did: 'did', is: 'is', are: 'are', was: 'was', were: 'were', could: 'could', would: 'would',
+    should: 'should', have: 'have', has: 'has', had: 'had', must: 'must', need: 'need' };
+  const m = {};
+  for (const k in neg) m[k + "n't"] = [k + ' not', 'не (отрицание)', 'не (заперечення)'];
+  m["can't"] = ['cannot', 'не могу, нельзя', 'не можу, не можна'];
+  m["won't"] = ['will not', 'не буду, не будет', 'не буду, не буде'];
+  m["shan't"] = ['shall not', 'не буду', 'не буду'];
+  m["ain't"] = ['am not / is not (разг.)', 'не (разговорное)', 'не (розмовне)'];
+  const pr = { i: ['я', 'я'], you: ['ты, вы', 'ти, ви'], he: ['он', 'він'], she: ['она', 'вона'], it: ['это, оно', 'це, воно'],
+    we: ['мы', 'ми'], they: ['они', 'вони'], that: ['это, то', 'це, те'], there: ['там (есть)', 'там (є)'], what: ['что', 'що'],
+    who: ['кто', 'хто'], here: ['вот, здесь', 'ось, тут'], where: ['где', 'де'], how: ['как', 'як'] };
+  const be = { i: 'am', you: 'are', we: 'are', they: 'are' };
+  for (const k in pr) {
+    const [ru, ua] = pr[k];
+    m[k + (be[k] === 'am' ? "'m" : be[k] ? "'re" : "'s")] = [k + ' ' + (be[k] || 'is'), ru + ' + есть/является', ua + ' + є'];
+    m[k + "'ll"] = [k + ' will', ru + ' + будущее время', ua + ' + майбутній час'];
+    m[k + "'ve"] = [k + ' have', ru + ' + have (иметь / перфект)', ua + ' + have (мати / перфект)'];
+    m[k + "'d"] = [k + ' would / ' + k + ' had', ru + ' + бы / уже (had)', ua + ' + би / вже (had)'];
+  }
+  m["let's"] = ['let us', 'давай(те)', 'давай(те)'];
+  m["o'clock"] = null;
+  return m;
+})();
+
+/* Имена собственные из текстов: [ru, ua] */
+const PROPER = {
+  ukraine: ['Украина', 'Україна'], kyiv: ['Киев', 'Київ'], dnipro: ['Днепр (город, река)', 'Дніпро (місто, річка)'], lviv: ['Львов', 'Львів'],
+  odesa: ['Одесса', 'Одеса'], kharkiv: ['Харьков', 'Харків'], zaporizhzhia: ['Запорожье', 'Запоріжжя'], europe: ['Европа', 'Європа'],
+  london: ['Лондон', 'Лондон'], paris: ['Париж', 'Париж'], vienna: ['Вена', 'Відень'], berlin: ['Берлин', 'Берлін'], warsaw: ['Варшава', 'Варшава'],
+  poland: ['Польша', 'Польща'], brazil: ['Бразилия', 'Бразилія'], finland: ['Финляндия', 'Фінляндія'], ethiopia: ['Эфиопия', 'Ефіопія'],
+  yemen: ['Йемен', 'Ємен'], england: ['Англия', 'Англія'], britain: ['Британия', 'Британія'], america: ['Америка', 'Америка'],
+  usa: ['США', 'США'], germany: ['Германия', 'Німеччина'], france: ['Франция', 'Франція'], italy: ['Италия', 'Італія'], spain: ['Испания', 'Іспанія'],
+  japan: ['Япония', 'Японія'], china: ['Китай', 'Китай'], africa: ['Африка', 'Африка'], asia: ['Азия', 'Азія'],
+  ukrainian: ['украинский; украинец', 'український; українець'], polish: ['польский; поляк', 'польський; поляк'],
+  english: ['английский', 'англійська'], european: ['европейский', 'європейський'], british: ['британский', 'британський'],
+  american: ['американский', 'американський'], german: ['немецкий', 'німецький'], french: ['французский', 'французький'],
+  monday: ['понедельник', 'понеділок'], tuesday: ['вторник', 'вівторок'], wednesday: ['среда', 'середа'], thursday: ['четверг', 'четвер'],
+  friday: ['пятница', "п'ятниця"], saturday: ['суббота', 'субота'], sunday: ['воскресенье', 'неділя']
+};
 function lookupWord(raw, t) {
   const idx = baseIndex();
+  const low = raw.toLowerCase().replace(/[’]/g, "'");
+  if (CONTR[low]) return { contr: CONTR[low], form: low };
   const cands = lemmaCandidates(raw);
   for (const c of cands) if (idx.has(c)) return { b: idx.get(c), form: c };
   // свои слова из словаря
   for (const c of cands) { const w = store.words.find(x => !x.base_id && x.word.toLowerCase() === c); if (w) return { own: w }; }
   const g = (t && loc(t, 'gloss')) || {};
   for (const c of [raw.toLowerCase(), ...cands]) if (g[c]) return { gloss: g[c], form: c };
+  for (const c of cands) if (PROPER[c]) return { proper: PROPER[c], form: raw };
+  // составные слова через дефис: fifty-five, well-handled
+  if (/-/.test(raw)) {
+    const parts = raw.split('-').map(x => ({ x, r: lookupWord(x, t) })).filter(p => p.r?.b);
+    if (parts.length) return { parts, form: raw };
+  }
+  if (/^[A-Z]/.test(raw)) return { name: true, form: raw };
   return null;
 }
 
@@ -604,7 +668,14 @@ function lookupWord(raw, t) {
 function textById(id) { return TEXTS.find(t => t.id === id); }
 
 function wrapWords(par) {
-  return esc(par).replace(/[A-Za-z][A-Za-z'’-]*/g, m => `<span class="tw" data-w="${m}">${m}</span>`).replace(/\n/g, '<br>');
+  // сначала делим исходный текст на слова, потом экранируем (иначе апостроф в don't превращается в &#39;)
+  const re = /[A-Za-zÀ-ÿ](?:[A-Za-zÀ-ÿ'’-]*[A-Za-zÀ-ÿ])?/g;
+  let out = '', last = 0, m;
+  while ((m = re.exec(par))) {
+    out += esc(par.slice(last, m.index)) + `<span class="tw" data-w="${esc(m[0])}">${esc(m[0])}</span>`;
+    last = m.index + m[0].length;
+  }
+  return (out + esc(par.slice(last))).replace(/\n/g, '<br>');
 }
 
 function renderReader(view) {
@@ -639,12 +710,12 @@ function renderReader(view) {
       <h2 class="mt-7 font-extrabold flex items-center gap-2"><i data-lucide="circle-help" class="text-brand-500"></i>Вопросы к тексту</h2>
       <div id="quiz" class="mt-3 space-y-3"></div>
     </div>`;
-  $('#backBtn').onclick = () => { readAloud.stop(); practice.text = null; render(); };
+  $('#backBtn').onclick = () => { readAloud.stop(); closeWordTip(); practice.text = null; render(); };
   $('#trAllBtn').onclick = () => { practice.showTr = !practice.showTr; render(); };
   $('#listenBtn').onclick = () => { if (readAloud.on) readAloud.stop(); else readAloud.start(pars); render(); };
   $('#reader').onclick = e => {
     const w = e.target.closest('.tw');
-    if (w) { openWordPopup(w.dataset.w, t, w.closest('p').textContent); return; }
+    if (w) { openWordPopup(w.dataset.w, t, w.closest('p').textContent, w); return; }
     const tp = e.target.closest('[data-trp]');
     if (tp) { tp.parentElement.previousElementSibling.classList.toggle('hidden'); return; }
     const sp = e.target.closest('[data-sayp]');
@@ -667,6 +738,7 @@ const readAloud = {
       if (v) u.voice = v;
       u.lang = v?.lang || 'en-US';
       u.rate = Math.min(store.settings.rate || 0.9, 0.95);
+      u.volume = tts.vol();
       if (i === parts.length - 1) u.onend = () => { this.on = false; if (route.name === 'practice' && practice.text) { const b = $('#listenBtn'); if (b) { b.innerHTML = '<i data-lucide="volume-2"></i>Слушать текст'; icons(); } } };
       speechSynthesis.speak(u);
     });
@@ -674,52 +746,110 @@ const readAloud = {
   stop() { if (this.on && tts.supported) speechSynthesis.cancel(); this.on = false; }
 };
 
-function openWordPopup(raw, t, context) {
+/** На компьютере (мышь + широкий экран) перевод показывается небольшой подсказкой над словом */
+function wpDesktop() { return window.matchMedia('(min-width: 768px) and (pointer: fine)').matches; }
+
+let wpCleanup = null;
+function closeWordTip() {
+  const tip = document.getElementById('wordTip'); if (tip) tip.remove();
+  document.querySelectorAll('.tw.is-picked').forEach(x => x.classList.remove('is-picked'));
+  if (wpCleanup) { wpCleanup(); wpCleanup = null; }
+}
+
+function openWordPopup(raw, t, context, el) {
   const ua = store.settings.lang === 'ua';
+  const desk = !!el && wpDesktop();
+  const big = desk ? 'text-lg' : 'text-2xl', mid = desk ? 'text-base' : 'text-xl';
   const r = lookupWord(raw, t);
   let body = '', actions = '';
   if (r?.b) {
     const b = r.b;
     const w = store.words.find(x => x.base_id === b.base_id);
-    body = `<div class="flex items-center gap-2 flex-wrap"><span class="text-2xl font-extrabold">${esc(b.word)}</span>${levelBadge(b.level)}<span class="text-sm text-slate-400">${esc(b.transcription)}</span></div>
+    body = `<div class="flex items-center gap-2 flex-wrap"><span class="${big} font-extrabold">${esc(b.word)}</span>${levelBadge(b.level)}<span class="text-sm text-slate-400">${esc(b.transcription)}</span></div>
       ${r.form !== raw.toLowerCase() ? `<div class="text-xs text-slate-400 mt-0.5">в тексте: ${esc(raw)}</div>` : ''}
-      <div class="text-xl font-bold text-brand-600 dark:text-brand-300 mt-2">${esc(ua ? b.ua : b.ru)}</div>
+      <div class="${mid} font-bold text-brand-600 dark:text-brand-300 mt-1">${esc(ua ? b.ua : b.ru)}</div>
       <div class="text-xs text-slate-400 mt-0.5">${esc(POS_NAMES[b.pos] || b.pos)}${b.topic ? ' · ' + esc(topicName(b.topic)) : ''}</div>
-      ${b.ex1 ? `<div class="mt-3">${exampleBlock(b.ex1, ua ? b.ex1ua : b.ex1ru, b.word)}</div>` : ''}`;
-    actions = w ? `<div class="text-sm text-center text-slate-500 py-2">Уже в словаре: ${statusBadge(w.priority)}</div>`
-      : `<button class="btn btn-primary w-full" id="wpAdd"><i data-lucide="list-plus"></i>Учить это слово</button>`;
+      ${b.ex1 && !desk ? `<div class="mt-3">${exampleBlock(b.ex1, ua ? b.ex1ua : b.ex1ru, b.word)}</div>` : ''}
+      ${b.ex1 && desk ? `<div class="mt-2 text-sm leading-snug"><div>${esc(b.ex1)}</div><div class="text-slate-500 dark:text-slate-400">${esc(ua ? b.ex1ua : b.ex1ru)}</div></div>` : ''}`;
+    actions = w ? `<div class="text-sm text-center text-slate-500 py-1">Уже в словаре: ${statusBadge(w.priority)}</div>`
+      : `<button class="btn btn-primary w-full ${desk ? '!h-9 text-sm' : ''}" id="wpAdd"><i data-lucide="list-plus"></i>Учить это слово</button>`;
   } else if (r?.own) {
-    body = `<div class="text-2xl font-extrabold">${esc(r.own.word)}</div><div class="text-xl font-bold text-brand-600 dark:text-brand-300 mt-2">${esc(r.own.translation)}</div>`;
-    actions = `<div class="text-sm text-center text-slate-500 py-2">Уже в словаре: ${statusBadge(r.own.priority)}</div>`;
+    body = `<div class="${big} font-extrabold">${esc(r.own.word)}</div><div class="${mid} font-bold text-brand-600 dark:text-brand-300 mt-1">${esc(r.own.translation)}</div>`;
+    actions = `<div class="text-sm text-center text-slate-500 py-1">Уже в словаре: ${statusBadge(r.own.priority)}</div>`;
+  } else if (r?.parts) {
+    body = `<div class="${big} font-extrabold">${esc(raw)}</div><div class="text-xs text-slate-400 mt-0.5">составное слово</div>
+      ${r.parts.map(p => `<div class="mt-1"><b>${esc(p.x)}</b> — <span class="font-bold text-brand-600 dark:text-brand-300">${esc(ua ? p.r.b.ua : p.r.b.ru)}</span></div>`).join('')}`;
+  } else if (r?.contr) {
+    body = `<div class="${big} font-extrabold">${esc(raw)}</div><div class="text-sm text-slate-500 dark:text-slate-400 mt-0.5">сокращение от <b>${esc(r.contr[0])}</b></div>
+      <div class="${mid} font-bold text-brand-600 dark:text-brand-300 mt-1">${esc(ua ? r.contr[2] : r.contr[1])}</div>`;
+  } else if (r?.proper) {
+    body = `<div class="${big} font-extrabold">${esc(raw)}</div><div class="${mid} font-bold text-brand-600 dark:text-brand-300 mt-1">${esc(ua ? r.proper[1] : r.proper[0])}</div>
+      <div class="text-xs text-slate-400 mt-0.5">имя собственное / название</div>`;
+  } else if (r?.name) {
+    body = `<div class="${big} font-extrabold">${esc(raw)}</div><div class="${mid} font-bold text-brand-600 dark:text-brand-300 mt-1">Имя или название</div>
+      <div class="text-xs text-slate-400 mt-0.5">Имена людей и названия не переводятся.</div>`;
   } else if (r?.gloss) {
     const exists = store.words.some(x => normAnswer(x.word) === normAnswer(r.form));
-    body = `<div class="text-2xl font-extrabold">${esc(r.form)}</div><div class="text-xl font-bold text-brand-600 dark:text-brand-300 mt-2">${esc(r.gloss)}</div>
+    body = `<div class="${big} font-extrabold">${esc(r.form)}</div><div class="${mid} font-bold text-brand-600 dark:text-brand-300 mt-1">${esc(r.gloss)}</div>
       <div class="text-xs text-slate-400 mt-1">Подсказка к тексту — этого слова пока нет в общей базе</div>`;
-    actions = exists ? '<div class="text-sm text-center text-slate-500 py-2">Уже в словаре</div>' : `<button class="btn btn-primary w-full" id="wpAddOwn"><i data-lucide="list-plus"></i>Добавить в мои слова</button>`;
+    actions = exists ? '<div class="text-sm text-center text-slate-500 py-1">Уже в словаре</div>' : `<button class="btn btn-primary w-full ${desk ? '!h-9 text-sm' : ''}" id="wpAddOwn"><i data-lucide="list-plus"></i>Добавить в мои слова</button>`;
   } else {
-    body = `<div class="text-2xl font-extrabold">${esc(raw)}</div><div class="text-slate-500 mt-2">Этого слова нет в базе WordFlow.</div>`;
-    actions = `<a class="btn btn-ghost w-full" target="_blank" rel="noopener" href="https://translate.google.com/?sl=en&tl=${ua ? 'uk' : 'ru'}&text=${encodeURIComponent(raw)}"><i data-lucide="external-link"></i>Открыть в Google Переводчике</a>`;
+    body = `<div class="${big} font-extrabold">${esc(raw)}</div><div class="text-slate-500 mt-1 text-sm">Этого слова нет в базе WordFlow (имя, название или редкое слово).</div>`;
+    actions = `<a class="btn btn-ghost w-full ${desk ? '!h-9 text-sm' : ''}" target="_blank" rel="noopener" href="https://translate.google.com/?sl=en&tl=${ua ? 'uk' : 'ru'}&text=${encodeURIComponent(raw)}"><i data-lucide="external-link"></i>Google Переводчик</a>`;
   }
-  openModal(`<div class="p-5 md:p-6">
-      <div class="flex items-start gap-3">
-        <button class="icon-btn shrink-0" data-say="${esc(r?.b?.word || r?.form || raw)}" aria-label="Озвучить"><i data-lucide="volume-2"></i></button>
+  const sayWord = r?.b?.word || r?.form || raw;
+  const inner = `<div class="flex items-start gap-${desk ? 2 : 3}">
+        <button class="icon-btn shrink-0 ${desk ? '!w-8 !h-8' : ''}" data-say="${esc(sayWord)}" aria-label="Озвучить"><i data-lucide="volume-2"></i></button>
         <div class="flex-1 min-w-0">${body}</div>
-        <button class="icon-btn shrink-0" data-close-btn aria-label="Закрыть"><i data-lucide="x"></i></button>
+        <button class="icon-btn shrink-0 ${desk ? '!w-8 !h-8' : ''}" data-close-btn aria-label="Закрыть"><i data-lucide="x"></i></button>
       </div>
-      <div class="mt-4">${actions}</div>
-    </div>`);
-  const root = $('#modalRoot');
+      <div class="mt-${desk ? 2 : 4}">${actions}</div>`;
+
+  let root, close;
+  if (desk) {
+    closeWordTip();
+    el.classList.add('is-picked');
+    root = document.createElement('div');
+    root.id = 'wordTip';
+    root.className = 'word-tip pop';
+    root.innerHTML = inner + '<div class="word-tip-arrow"></div>';
+    document.body.appendChild(root);
+    // позиция: над словом, если сверху мало места — под словом
+    const rc = el.getBoundingClientRect(), tw = root.offsetWidth, th = root.offsetHeight;
+    let left = rc.left + rc.width / 2 - tw / 2;
+    left = Math.max(8, Math.min(left, document.documentElement.clientWidth - tw - 8));
+    const above = rc.top - th - 10 > 8;
+    const top = above ? rc.top - th - 10 : rc.bottom + 10;
+    root.style.left = (left + window.scrollX) + 'px';
+    root.style.top = (top + window.scrollY) + 'px';
+    root.classList.add(above ? 'is-above' : 'is-below');
+    const arrow = root.querySelector('.word-tip-arrow');
+    arrow.style.left = Math.max(14, Math.min(tw - 14, rc.left + rc.width / 2 - left)) + 'px';
+    close = closeWordTip;
+    const onDoc = e => { if (!root.contains(e.target) && !e.target.closest('.tw')) closeWordTip(); };
+    const onKey = e => { if (e.key === 'Escape') closeWordTip(); };
+    const onResize = () => closeWordTip();
+    setTimeout(() => document.addEventListener('mousedown', onDoc), 0);
+    document.addEventListener('keydown', onKey);
+    window.addEventListener('resize', onResize);
+    wpCleanup = () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); window.removeEventListener('resize', onResize); };
+    icons();
+  } else {
+    openModal(`<div class="p-5 md:p-6">${inner}</div>`);
+    root = $('#modalRoot');
+    close = closeModal;
+  }
   bindSay(root);
-  $('[data-close-btn]', root).onclick = closeModal;
-  tts.speak(r?.b?.word || r?.form || raw);
-  const add = $('#wpAdd');
-  if (add) add.onclick = () => { addFromBase(r.b); store.saveWords(); closeModal(); toast(`«${r.b.word}» добавлено в изучение`); };
-  const addOwn = $('#wpAddOwn');
+  $('[data-close-btn]', root).onclick = close;
+  if (autoSpeak()) tts.speak(sayWord);
+  const add = $('#wpAdd', root);
+  if (add) add.onclick = () => { addFromBase(r.b); store.saveWords(); close(); toast(`«${r.b.word}» добавлено в изучение`); };
+  const addOwn = $('#wpAddOwn', root);
   if (addOwn) addOwn.onclick = () => {
     const sentence = (context.match(new RegExp(`[^.!?]*\\b${raw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b[^.!?]*[.!?]?`, 'i')) || [''])[0].trim();
     const w = touch(normWord({ word: r.form, translation: r.gloss, example1_en: sentence, priority: 'active' }));
     delete store.deleted[keyOf(w)];
-    store.words.push(w); store.saveWords(); closeModal(); toast(`«${r.form}» добавлено в мои слова`);
+    store.words.push(w); store.saveWords(); close(); toast(`«${r.form}» добавлено в мои слова`);
   };
 }
 
