@@ -27,7 +27,7 @@ const pstore = {
   get() {
     if (!this.data) {
       const d = load(LS_PRACTICE, null) || {};
-      this.data = { s: d.s || {}, t: d.t || {} };
+      this.data = { s: d.s || {}, t: d.t || {}, m: d.m || {} };   // m — итоговые тесты модулей курса
     }
     return this.data;
   },
@@ -36,7 +36,8 @@ const pstore = {
   merge(remote) {
     const d = this.get();
     let changedLocal = false, needPush = false;
-    for (const k of ['s', 't']) {
+    for (const k of ['s', 't', 'm']) {
+      d[k] ||= {};
       const r = (remote && remote[k]) || {};
       for (const [id, v] of Object.entries(r)) {
         if (!d[k][id] || (+v.u || 0) > (+d[k][id].u || 0)) { d[k][id] = v; changedLocal = true; }
@@ -137,6 +138,7 @@ function checkTranslation(given, refs) {
 /* ---------- Экран «Практика» ---------- */
 
 function renderPractice(view) {
+  if (!practice.text && textAudio.id) textAudio.reset();
   if (practice.run) return renderSentRun(view);
   if (practice.lesson) return renderLesson(view);
   if (practice.text) return renderReader(view);
@@ -196,6 +198,14 @@ function renderLessonList(root) {
   };
 }
 
+/** Если урок или текст открыт из курса — кнопка «назад» возвращает в модуль */
+function backToCourse() {
+  if (practice.from !== 'course') return false;
+  practice.from = null;
+  location.hash = '#/course';
+  return true;
+}
+
 /* ---------- Урок ---------- */
 
 function lessonById(id) { return SENT.lessons.find(l => l.id === id); }
@@ -207,7 +217,7 @@ function renderLesson(view) {
   const p = pstore.get().s[l.id];
   const usedRoles = [...new Set(l.s.flatMap(s => parseSent(s[0]).map(x => x.role)).filter(Boolean))];
   view.innerHTML = `
-    <button class="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-brand-500 mb-2" id="backBtn"><i data-lucide="chevron-left"></i>Предложения</button>
+    <button class="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-brand-500 mb-2" id="backBtn"><i data-lucide="chevron-left"></i>${practice.from === 'course' ? 'Модуль курса' : 'Предложения'}</button>
     <div class="flex items-start gap-3">
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2">${levelBadge(l.level)}${p ? `<span class="text-xs font-bold text-brand-500">лучший результат ${p.best}%</span>` : ''}</div>
@@ -235,7 +245,7 @@ function renderLesson(view) {
     </div>
     <button class="btn btn-primary btn-lg w-full mt-5" id="practiceBtn2"><i data-lucide="play"></i>Практика</button>`;
   bindSay(view);
-  $('#backBtn').onclick = () => { practice.lesson = null; render(); };
+  $('#backBtn').onclick = () => { practice.lesson = null; backToCourse() || render(); };
   $('#practiceBtn').onclick = $('#practiceBtn2').onclick = () => startLessonRun(l);
 }
 
@@ -538,7 +548,7 @@ function renderTextList(root) {
           <div class="flex-1 min-w-0">
             <div class="font-extrabold truncate">${esc(t.title)}</div>
             <div class="text-sm text-slate-500 dark:text-slate-400 truncate">${esc(isUA() && t.ua ? t.ua.name : t.ru)}</div>
-            <div class="text-xs text-slate-400 mt-1">${n} ${plural(n, 'слово', 'слова', 'слов')} · ~${Math.max(1, Math.round(n / 90))} мин${p ? ` · <span class="text-brand-500 font-bold">вопросы ${p.score}/${p.total}</span>` : ''}</div>
+            <div class="text-xs text-slate-400 mt-1"><i data-lucide="headphones" class="inline -mt-0.5" style="width:.8rem;height:.8rem"></i> ${n} ${plural(n, 'слово', 'слова', 'слов')} · ~${Math.max(1, Math.round(n / 90))} мин${p ? ` · <span class="text-brand-500 font-bold">вопросы ${p.score}/${p.total}</span>` : ''}</div>
           </div>
         </button>`;
       }).join('')}</div>`;
@@ -667,12 +677,12 @@ function lookupWord(raw, t) {
 
 function textById(id) { return TEXTS.find(t => t.id === id); }
 
-function wrapWords(par) {
+function wrapWords(par, counter = { i: 0 }) {
   // сначала делим исходный текст на слова, потом экранируем (иначе апостроф в don't превращается в &#39;)
   const re = /[A-Za-zÀ-ÿ](?:[A-Za-zÀ-ÿ'’-]*[A-Za-zÀ-ÿ])?/g;
   let out = '', last = 0, m;
   while ((m = re.exec(par))) {
-    out += esc(par.slice(last, m.index)) + `<span class="tw" data-w="${esc(m[0])}">${esc(m[0])}</span>`;
+    out += esc(par.slice(last, m.index)) + `<span class="tw" data-i="${counter.i++}" data-w="${esc(m[0])}">${esc(m[0])}</span>`;
     last = m.index + m[0].length;
   }
   return (out + esc(par.slice(last))).replace(/\n/g, '<br>');
@@ -684,21 +694,25 @@ function renderReader(view) {
   const pars = t.text.split(/\n\s*\n/), trs = (loc(t, 'tr') || '').split(/\n\s*\n/);
   const p = pstore.get().t[t.id];
   const n = textWords(t);
+  const counter = { i: 0 }, parStart = [];
+  const parHtml = pars.map(par => { parStart.push(counter.i); return wrapWords(par, counter); });
+  parStart.push(counter.i);
+  textAudio.prepare(t);
   view.innerHTML = `
     <div class="max-w-2xl mx-auto">
-      <button class="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-brand-500 mb-2" id="backBtn"><i data-lucide="chevron-left"></i>Тексты</button>
+      <button class="inline-flex items-center gap-1 text-sm font-semibold text-slate-500 hover:text-brand-500 mb-2" id="backBtn"><i data-lucide="chevron-left"></i>${practice.from === 'course' ? 'Модуль курса' : 'Тексты'}</button>
       <div class="flex items-center gap-2">${levelBadge(t.level)}<span class="text-xs text-slate-400">${n} ${plural(n, 'слово', 'слова', 'слов')} · ~${Math.max(1, Math.round(n / 90))} мин</span>${p ? `<span class="text-xs font-bold text-brand-500">прочитано · ${p.score}/${p.total}</span>` : ''}</div>
       <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight mt-1">${esc(t.title)}</h1>
       <p class="text-slate-500 dark:text-slate-400">${esc(isUA() && t.ua ? t.ua.name : t.ru)}</p>
-      <div class="mt-4 flex flex-wrap gap-2">
-        <button class="btn btn-ghost !h-10" id="listenBtn"><i data-lucide="${readAloud.on ? 'square' : 'volume-2'}"></i>${readAloud.on ? 'Стоп' : 'Слушать текст'}</button>
+      <div id="player" class="mt-4 card p-3 flex items-center gap-2 md:gap-3 sticky top-[4.25rem] z-20 shadow-lg shadow-black/5">${textAudio.html()}</div>
+      <div class="mt-3 flex flex-wrap gap-2">
         <button class="btn btn-ghost !h-10" id="trAllBtn"><i data-lucide="languages"></i>${practice.showTr ? 'Скрыть перевод' : 'Показать перевод'}</button>
       </div>
-      <div class="mt-3 rounded-2xl bg-brand-500/10 text-sm px-4 py-2.5 flex items-center gap-2 text-brand-700 dark:text-brand-200"><i data-lucide="pointer"></i>Нажмите на незнакомое слово — появится перевод.</div>
+      <div class="mt-3 rounded-2xl bg-brand-500/10 text-sm px-4 py-2.5 flex items-center gap-2 text-brand-700 dark:text-brand-200"><i data-lucide="pointer"></i>Нажмите на незнакомое слово — появится перевод. Во время прослушивания текущее слово подсвечивается.</div>
 
       <article class="card p-5 md:p-7 mt-4 space-y-4 text-[17px] leading-[1.75]" id="reader">
         ${pars.map((par, i) => `<div class="group">
-          <p data-par="${i}">${wrapWords(par)}</p>
+          <p data-par="${i}">${parHtml[i]}</p>
           <div class="par-tr ${practice.showTr ? '' : 'hidden'} text-[15px] leading-relaxed text-slate-500 dark:text-slate-400 mt-1.5 pl-3 border-l-2 border-brand-500/40">${esc(trs[i] || '').replace(/\n/g, '<br>')}</div>
           <div class="flex gap-3 mt-1">
             <button class="text-xs font-semibold text-slate-400 hover:text-brand-500 inline-flex items-center gap-1" data-trp="${i}"><i data-lucide="languages" style="width:.8rem;height:.8rem"></i>перевод</button>
@@ -710,16 +724,16 @@ function renderReader(view) {
       <h2 class="mt-7 font-extrabold flex items-center gap-2"><i data-lucide="circle-help" class="text-brand-500"></i>Вопросы к тексту</h2>
       <div id="quiz" class="mt-3 space-y-3"></div>
     </div>`;
-  $('#backBtn').onclick = () => { readAloud.stop(); closeWordTip(); practice.text = null; render(); };
+  $('#backBtn').onclick = () => { readAloud.stop(); textAudio.stop(); closeWordTip(); practice.text = null; backToCourse() || render(); };
   $('#trAllBtn').onclick = () => { practice.showTr = !practice.showTr; render(); };
-  $('#listenBtn').onclick = () => { if (readAloud.on) readAloud.stop(); else readAloud.start(pars); render(); };
+  textAudio.bind(pars);
   $('#reader').onclick = e => {
     const w = e.target.closest('.tw');
     if (w) { openWordPopup(w.dataset.w, t, w.closest('p').textContent, w); return; }
     const tp = e.target.closest('[data-trp]');
     if (tp) { tp.parentElement.previousElementSibling.classList.toggle('hidden'); return; }
     const sp = e.target.closest('[data-sayp]');
-    if (sp) { readAloud.start([pars[+sp.dataset.sayp]]); }
+    if (sp) { const k = +sp.dataset.sayp; if (!textAudio.playRange(parStart[k], parStart[k + 1] - 1)) readAloud.start([pars[k]]); }
   };
   drawQuiz(t);
 }
@@ -739,12 +753,134 @@ const readAloud = {
       u.lang = v?.lang || 'en-US';
       u.rate = Math.min(store.settings.rate || 0.9, 0.95);
       u.volume = tts.vol();
-      if (i === parts.length - 1) u.onend = () => { this.on = false; if (route.name === 'practice' && practice.text) { const b = $('#listenBtn'); if (b) { b.innerHTML = '<i data-lucide="volume-2"></i>Слушать текст'; icons(); } } };
+      if (i === parts.length - 1) u.onend = () => { this.on = false; if (typeof textAudio !== 'undefined') textAudio.ui(); };
       speechSynthesis.speak(u);
     });
   },
   stop() { if (this.on && tts.supported) speechSynthesis.cancel(); this.on = false; }
 };
+
+/** Озвучка текста диктором (MP3 из ElevenLabs) с подсветкой текущего слова.
+    Тайминги слов лежат рядом: audio/<id>.json → { w: [[начало, конец], …] } в секундах. */
+const TEXT_RATES = [0.75, 0.9, 1, 1.15];
+const textAudio = {
+  id: null, a: null, w: null, ok: true, cur: -1, stopAt: null, raf: 0, pars: null,
+  prepare(t) {
+    if (this.id === t.id) return;
+    this.reset(); this.cur = -1; this.ok = true; this.id = t.id;
+    const a = this.a = new Audio(`audio/${t.id}.mp3`);
+    a.preload = 'metadata';
+    a.playbackRate = store.settings.textRate || 1;
+    a.addEventListener('loadedmetadata', () => this.ui());
+    a.addEventListener('play', () => { this.ui(); this.loop(); });
+    a.addEventListener('pause', () => { this.ui(); cancelAnimationFrame(this.raf); });
+    a.addEventListener('ended', () => { this.mark(-1); this.ui(); });
+    a.addEventListener('error', () => { if (this.a === a) { this.ok = false; this.ui(); } });
+    fetch(`audio/${t.id}.json`).then(r => r.ok ? r.json() : null).then(j => { if (j && this.id === t.id) this.w = j.w; }).catch(() => {});
+  },
+  html() {
+    const rate = store.settings.textRate || 1;
+    return `<button class="w-11 h-11 shrink-0 rounded-full bg-brand-500 text-white grid place-items-center hover:bg-brand-600" id="tpPlay" aria-label="Слушать"><i data-lucide="play"></i></button>
+      <button class="icon-btn shrink-0" id="tpBack" title="Назад 5 секунд" aria-label="Назад 5 секунд"><i data-lucide="rotate-ccw"></i></button>
+      <div class="flex-1 min-w-0">
+        <input type="range" id="tpSeek" min="0" max="1000" value="0" class="w-full accent-brand-500" aria-label="Позиция" />
+        <div class="flex justify-between gap-2 text-[11px] text-slate-400 tabular-nums -mt-0.5"><span id="tpTime">0:00</span><span id="tpNote" class="truncate">диктор · британский акцент</span><span id="tpDur">—</span></div>
+      </div>
+      <button class="chip shrink-0 !px-2.5 tabular-nums" id="tpRate" title="Скорость">${rate}×</button>`;
+  },
+  bind(pars) {
+    this.pars = pars;
+    $('#tpPlay').onclick = () => this.toggle();
+    $('#tpBack').onclick = () => { if (this.a) { this.a.currentTime = Math.max(0, this.a.currentTime - 5); this.sync(false); } };
+    $('#tpRate').onclick = () => {
+      const cur = store.settings.textRate || 1;
+      const next = TEXT_RATES[(TEXT_RATES.indexOf(cur) + 1) % TEXT_RATES.length];
+      store.settings.textRate = next; store.saveSettings();
+      if (this.a) this.a.playbackRate = next;
+      $('#tpRate').textContent = next + '×';
+    };
+    $('#tpSeek').oninput = e => { if (this.a?.duration) { this.a.currentTime = e.target.value / 1000 * this.a.duration; this.stopAt = null; this.sync(true); } };
+    this.ui(); this.sync(false);
+    if (this.a && !this.a.paused) this.loop();
+  },
+  toggle() {
+    if (!this.ok || !this.a) { if (readAloud.on) readAloud.stop(); else readAloud.start(this.pars || []); setTimeout(() => this.ui(), 50); return; }
+    if (this.a.paused) {
+      this.stopAt = null; readAloud.stop();
+      this.a.volume = tts.vol();
+      this.a.play().catch(() => { this.ok = false; this.ui(); });
+    } else this.a.pause();
+  },
+  /** Проиграть отрезок со слова from по слово to (кнопка «слушать» у абзаца) */
+  playRange(from, to) {
+    if (!this.ok || !this.a || !this.w || !this.w[from] || !this.w[to]) return false;
+    readAloud.stop();
+    this.a.currentTime = Math.max(0, this.w[from][0] - 0.05);
+    this.stopAt = this.w[to][1] + 0.15;
+    this.a.volume = tts.vol();
+    this.a.play().catch(() => {});
+    return true;
+  },
+  loop() {
+    cancelAnimationFrame(this.raf);
+    const step = () => {
+      if (!this.a || this.a.paused) return;
+      if (this.stopAt && this.a.currentTime >= this.stopAt) { this.a.pause(); this.stopAt = null; this.mark(-1); return; }
+      this.sync(true);
+      this.raf = requestAnimationFrame(step);
+    };
+    this.raf = requestAnimationFrame(step);
+  },
+  /** Найти слово, которое звучит сейчас, и обновить ползунок */
+  sync(follow) {
+    const a = this.a; if (!a) return;
+    const seek = document.getElementById('tpSeek'), tm = document.getElementById('tpTime');
+    if (seek && a.duration) seek.value = Math.round(a.currentTime / a.duration * 1000);
+    if (tm) tm.textContent = fmtClock(a.currentTime);
+    if (!this.w) return;
+    const t = a.currentTime;
+    let lo = 0, hi = this.w.length - 1, i = -1;
+    while (lo <= hi) { const mid = (lo + hi) >> 1; if (this.w[mid][0] <= t + 0.03) { i = mid; lo = mid + 1; } else hi = mid - 1; }
+    if (i >= 0 && t > this.w[i][1] + 0.6) i = -1;    // пауза между абзацами
+    if (a.paused && !a.currentTime) i = -1;
+    this.mark(i, follow);
+  },
+  mark(i, follow) {
+    if (i === this.cur && (i < 0 || document.querySelector('.tw.tw-now'))) return;
+    document.querySelectorAll('.tw.tw-now').forEach(x => x.classList.remove('tw-now'));
+    this.cur = i;
+    if (i < 0) return;
+    const el = document.querySelector(`.tw[data-i="${i}"]`);
+    if (!el) return;
+    el.classList.add('tw-now');
+    if (follow) {
+      const r = el.getBoundingClientRect(), h = window.innerHeight;
+      if (r.top < 160 || r.bottom > h - 110) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    }
+  },
+  ui() {
+    const b = document.getElementById('tpPlay'); if (!b) return;
+    const playing = this.ok ? !!(this.a && !this.a.paused) : readAloud.on;
+    b.innerHTML = `<i data-lucide="${playing ? 'pause' : 'play'}"></i>`;
+    const d = document.getElementById('tpDur'); if (d && this.a?.duration) d.textContent = fmtClock(this.a.duration);
+    const note = document.getElementById('tpNote');
+    if (note && !this.ok) note.textContent = 'нет записи диктора — голос браузера';
+    ['tpBack', 'tpSeek', 'tpRate'].forEach(id => { const el = document.getElementById(id); if (el) el.disabled = !this.ok; });
+    icons();
+  },
+  stop() {
+    if (this.a) this.a.pause();
+    cancelAnimationFrame(this.raf); this.stopAt = null; this.cur = -1;
+    document.querySelectorAll('.tw.tw-now').forEach(x => x.classList.remove('tw-now'));
+  },
+  /** Полный сброс при выходе из текста */
+  reset() {
+    this.stop();
+    if (this.a) { this.a.removeAttribute('src'); try { this.a.load(); } catch {} }
+    this.a = null; this.id = null; this.w = null;
+  }
+};
+function fmtClock(sec) { sec = Math.max(0, Math.floor(sec || 0)); return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; }
 
 /** На компьютере (мышь + широкий экран) перевод показывается небольшой подсказкой над словом */
 function wpDesktop() { return window.matchMedia('(min-width: 768px) and (pointer: fine)').matches; }

@@ -253,6 +253,7 @@ function normWord(raw = {}) {
     ease: Math.min(3, Math.max(1.3, num(raw.ease, 2.5))),
     lapses: Math.max(0, Math.round(num(raw.lapses, 0))),
     ex: Math.max(0, Math.round(num(raw.ex, 0))) % 4,
+    seen: Math.max(0, Math.round(num(raw.seen, 0))),   // сколько раз слово тренировалось
     added: num(raw.added, 0) || Date.now(),
     updated: num(raw.updated, 0),  // время последнего изменения (для синхронизации)
     base_id: str(raw.base_id),     // слово из общей базы (пусто — своё слово)
@@ -382,6 +383,7 @@ function applySrs(w, ok, wasDue) {
     w.lapses += 1;
     w.ease = Math.max(1.3, +(w.ease - 0.2).toFixed(2));
   }
+  w.seen = (w.seen || 0) + 1;
   w.last_reviewed = todayStr();
   touch(w);
 }
@@ -763,6 +765,7 @@ function renderNav() {
 
 function render() {
   if (typeof closeWordTip === 'function') closeWordTip();
+  if (typeof textAudio !== 'undefined' && textAudio.id && route.name !== 'practice') textAudio.reset();
   renderNav();
   const view = $('#view');
   const fn = { course: renderCourse, dict: renderDict, train: renderTrain, practice: renderPractice, stats: renderStats, base: renderBase, settings: renderSettings }[route.name] || renderDict;
@@ -891,7 +894,7 @@ function filteredWords() {
   return list.sort(cmp);
 }
 
-function renderDict(view) {
+function renderMyWords(view) {
   const c = counts();
   if (!store.words.length) {
     view.innerHTML = `
@@ -1185,7 +1188,7 @@ function openEditModal(id) {
 
 /* ---------- 7б. Экран «Курс»: общая база A1–C1, уровни, блоки, темы ---------- */
 
-const courseState = { level: null, topic: 'all' };
+
 
 function levelStats(level, topic = 'all') {
   const items = BASE.list.filter(b => b.level === level && (topic === 'all' || b.topic === topic));
@@ -1205,115 +1208,7 @@ function progressBar(learned, learning, total) {
     ${p1 ? `<span style="width:${p1}%" class="bg-brand-500"></span>` : ''}${p2 ? `<span style="width:${p2}%" class="bg-amber-400"></span>` : ''}</div>`;
 }
 
-function renderCourse(view) {
-  const s = store.settings;
-  const avail = LEVELS.filter(l => BASE.list.some(b => b.level === l));
-  if (!courseState.level || !avail.includes(courseState.level)) courseState.level = avail.includes(s.courseLevel) ? s.courseLevel : avail[0];
-  const lvl = courseState.level;
-  const plan = todayPlan();
-  const st = levelStats(lvl, courseState.topic);
-  const blocks = {};
-  // весь уровень — блоки курса; отдельная тема — свои части по 20 слов
-  st.items.forEach((b, i) => (blocks[courseState.topic === 'all' ? b.block : Math.floor(i / 20) + 1] ||= []).push(b));
-  const topicsHere = Object.keys(TOPICS).filter(t => BASE.list.some(b => b.level === lvl && b.topic === t));
-
-  view.innerHTML = `
-    <div class="flex items-end justify-between gap-3 flex-wrap">
-      <div>
-        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Курс английского</h1>
-        <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">${BASE.list.length} самых нужных слов и фраз · уровни ${avail[0]}–${avail[avail.length - 1]}</p>
-      </div>
-      <div class="flex gap-1 p-1 rounded-xl bg-slate-500/10" id="langSeg" title="Язык перевода">
-        ${[['ru', 'RU'], ['ua', 'UA']].map(([v, l]) => `<button class="px-3 h-8 rounded-lg text-sm font-bold ${s.lang === v ? 'bg-brand-500 text-white' : 'text-slate-500'}" data-lang="${v}">${l}</button>`).join('')}
-      </div>
-    </div>
-
-    <a href="#/train" class="mt-5 card p-4 md:p-5 flex items-center gap-4 hover:border-brand-400 transition group">
-      <div class="w-12 h-12 rounded-2xl bg-brand-500 text-white grid place-items-center pulse-ring"><i data-lucide="zap" style="width:1.4rem;height:1.4rem"></i></div>
-      <div class="flex-1 min-w-0">
-        <div class="font-extrabold">План на сегодня</div>
-        <div class="text-sm text-slate-500 dark:text-slate-400">${plan.due + plan.fresh
-          ? `${plan.due} ${plural(plan.due, 'слово', 'слова', 'слов')} повторить · ${plan.fresh} ${plural(plan.fresh, 'новое', 'новых', 'новых')}`
-          : `Готово на сегодня: новых ${plan.doneNew} из ${plan.limit}. Можно повторить ещё.`}</div>
-      </div>
-      <i data-lucide="chevron-right" class="text-slate-400 group-hover:translate-x-1 transition"></i>
-    </a>
-
-    <div class="mt-4 card p-4 flex flex-wrap items-center gap-x-6 gap-y-3">
-      <div class="text-sm font-bold">Новых слов в день</div>
-      <div class="flex gap-2" id="perDaySeg">
-        ${[5, 10, 15, 20].map(n => `<button class="chip ${s.newPerDay === n ? 'is-active' : ''}" data-n="${n}">${n}</button>`).join('')}
-      </div>
-      <label class="flex items-center gap-2 text-sm ml-auto"><input type="checkbox" id="autoCourseChk" class="w-5 h-5 accent-brand-500" ${s.autoCourse ? 'checked' : ''}>
-        Брать новые слова из курса автоматически</label>
-    </div>
-
-    <div class="mt-6 grid grid-cols-3 md:grid-cols-5 gap-2" id="lvlTabs">
-      ${LEVELS.map(l => {
-        const has = avail.includes(l);
-        const ls = has ? levelStats(l) : null;
-        return `<button ${has ? `data-lvl="${l}"` : 'disabled'} class="text-left rounded-2xl border-2 p-3 transition ${l === lvl ? 'border-brand-500 bg-brand-500/10' : 'border-slate-200 dark:border-white/10'} ${has ? 'hover:border-slate-300' : 'opacity-50'}">
-          <div class="flex items-center justify-between"><span class="text-lg font-extrabold">${l}</span>${has ? '' : '<i data-lucide="lock" style="width:.9rem;height:.9rem"></i>'}</div>
-          <div class="text-[11px] text-slate-500 dark:text-slate-400 truncate">${has ? LEVEL_INFO[l] : 'скоро'}</div>
-          ${has ? `<div class="mt-2">${progressBar(ls.learned, ls.learning, ls.total)}</div><div class="text-[11px] text-slate-400 mt-1 tabular-nums">${ls.learned}/${ls.total}</div>` : ''}
-        </button>`;
-      }).join('')}
-    </div>
-
-    <div class="mt-4 flex gap-2 overflow-x-auto no-scrollbar -mx-4 px-4 pb-1" id="topicChips">
-      <button class="chip ${courseState.topic === 'all' ? 'is-active' : ''}" data-t="all">Все темы</button>
-      ${topicsHere.map(t => `<button class="chip ${courseState.topic === t ? 'is-active' : ''}" data-t="${t}"><i data-lucide="${TOPICS[t][2]}" style="width:.85rem;height:.85rem"></i>${esc(topicName(t))}</button>`).join('')}
-    </div>
-
-    <div class="mt-4 flex items-center justify-between gap-3 flex-wrap">
-      <div class="text-sm text-slate-500 dark:text-slate-400">
-        <span class="inline-flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-brand-500"></span>выучено ${st.learned}</span>
-        <span class="inline-flex items-center gap-1 ml-3"><span class="w-2.5 h-2.5 rounded-sm bg-amber-400"></span>изучается ${st.learning}</span>
-        <span class="ml-3">всего ${st.total}</span>
-      </div>
-      <div class="flex gap-2">
-        ${s.courseLevel !== lvl ? `<button class="btn btn-ghost !h-9 text-sm" id="startHereBtn"><i data-lucide="flag"></i>Начинать с ${lvl}</button>` : `<span class="text-xs text-brand-500 font-bold self-center">Курс идёт с ${lvl}</span>`}
-        <button class="btn btn-ghost !h-9 text-sm" id="knowLevelBtn"><i data-lucide="check-check"></i>Знаю ${courseState.topic === 'all' ? 'весь ' + lvl : 'тему'}</button>
-      </div>
-    </div>
-
-    <div class="mt-3 grid grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3" id="blockGrid">
-      ${Object.entries(blocks).map(([n, items]) => {
-        let l = 0, g = 0;
-        for (const b of items) { const w = st.byId.get(b.base_id); if (w) { if (w.priority === 'learned' || w.repetitions >= 3) l++; else g++; } }
-        const done = l === items.length;
-        return `<button class="card p-3 md:p-4 text-left hover:border-brand-400 transition min-w-0" data-block="${n}">
-          <div class="flex items-center justify-between gap-2">
-            <span class="font-extrabold">${courseState.topic === 'all' ? 'Блок' : 'Часть'} ${n}</span>
-            ${done ? '<i data-lucide="circle-check-big" class="text-brand-500"></i>' : `<span class="text-xs text-slate-400 tabular-nums">${l + g}/${items.length}</span>`}
-          </div>
-          <div class="text-xs md:text-sm text-slate-500 dark:text-slate-400 mt-1 truncate">${items.slice(0, 5).map(b => esc(b.word)).join(', ')}…</div>
-          <div class="mt-3 flex items-center gap-2"><div class="flex-1">${progressBar(l, g, items.length)}</div>
-            <span role="button" tabindex="0" data-train="${n}" title="Тренировать блок" aria-label="Тренировать блок" class="w-8 h-8 -my-1 rounded-xl bg-brand-500/15 text-brand-500 grid place-items-center hover:bg-brand-500 hover:text-white transition"><i data-lucide="play" style="width:.9rem;height:.9rem"></i></span></div>
-        </button>`;
-      }).join('')}
-    </div>
-    <p class="text-xs text-slate-400 mt-6">Уровень B2 пополняется, C1 появится в следующих обновлениях базы. Редкие слова уровня C2 в курс не входят.</p>`;
-
-  $('#langSeg').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };
-  $('#perDaySeg').onclick = e => { const b = e.target.closest('[data-n]'); if (!b) return; s.newPerDay = +b.dataset.n; store.saveSettings(); render(); };
-  $('#autoCourseChk').onchange = e => { s.autoCourse = e.target.checked; store.saveSettings(); render(); };
-  $('#lvlTabs').onclick = e => { const b = e.target.closest('[data-lvl]'); if (!b) return; courseState.level = b.dataset.lvl; courseState.topic = 'all'; render(); };
-  $('#topicChips').onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; courseState.topic = b.dataset.t; render(); };
-  const sh = $('#startHereBtn'); if (sh) sh.onclick = () => { s.courseLevel = lvl; store.saveSettings(); toast(`Новые слова будут браться с уровня ${lvl}`); render(); };
-  $('#knowLevelBtn').onclick = async () => {
-    const rest = st.items.filter(b => { const w = st.byId.get(b.base_id); return !w || (w.priority !== 'learned' && w.repetitions < 3); });
-    if (!rest.length) { toast('Здесь всё уже выучено'); return; }
-    if (!(await confirmDialog(`Отметить ${rest.length} ${plural(rest.length, 'слово', 'слова', 'слов')} как уже известные? Они не попадут в ежедневные тренировки (можно вернуть в словаре).`, 'Отметить'))) return;
-    rest.forEach(b => addFromBase(b, 'learned'));
-    store.saveWords(); toast('Готово'); render();
-  };
-  $('#blockGrid').onclick = e => {
-    const t = e.target.closest('[data-train]');
-    if (t) { const n = t.dataset.train; trainBlock(blocks[n].map(b => b.base_id), `${lvl} · ${courseState.topic === 'all' ? 'Блок' : topicName(courseState.topic) + ', часть'} ${n}`); return; }
-    const b = e.target.closest('[data-block]'); if (b) openBlockModal(blocks[b.dataset.block], b.dataset.block);
-  };
-}
+/* Экран «Курс» — в learn.js */
 
 function setLang(lang) {
   if (store.settings.lang === lang) return;
@@ -1323,7 +1218,7 @@ function setLang(lang) {
   render();
 }
 
-function openBlockModal(items, n) {
+function openBlockModal(items, title) {
   const ua = store.settings.lang === 'ua';
   const byId = new Map(store.words.filter(w => w.base_id).map(w => [w.base_id, w]));
   const state = b => { const w = byId.get(b.base_id); return !w ? 'none' : (w.priority === 'learned' || w.repetitions >= 3) ? 'learned' : w.priority; };
@@ -1331,7 +1226,7 @@ function openBlockModal(items, n) {
   openModal(`
     <div class="p-5 md:p-7">
       <div class="flex items-center justify-between">
-        <h2 class="text-xl font-extrabold">${courseState.level} · ${courseState.topic === 'all' ? 'Блок' : esc(topicName(courseState.topic)) + ', часть'} ${n}</h2>
+        <h2 class="text-xl font-extrabold">${esc(title)}</h2>
         <button class="icon-btn" data-close-btn aria-label="Закрыть"><i data-lucide="x"></i></button>
       </div>
       <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">«Тренировать блок» — упражнения только по словам этого блока. Нажмите на слово, чтобы отметить его как известное. «Учить блок» добавит слова в ежедневные тренировки.</p>
@@ -1361,9 +1256,8 @@ function openBlockModal(items, n) {
     const w = store.words.find(x => x.base_id === b.base_id);
     if (w && (w.priority === 'learned' || w.repetitions >= 3)) { w.priority = 'active'; w.repetitions = Math.min(w.repetitions, 2); touch(w); }
     else addFromBase(b, 'learned');
-    store.saveWords(); openBlockModal(items, n);
+    store.saveWords(); openBlockModal(items, title);
   };
-  const title = `${courseState.level} · ${courseState.topic === 'all' ? 'Блок' : topicName(courseState.topic) + ', часть'} ${n}`;
   $('#trainBlockBtn').onclick = () => { closeModal(); trainBlock(items.map(b => b.base_id), title); };
   $('#knowAllBtn').onclick = () => { items.forEach(b => addFromBase(b, 'learned')); store.saveWords(); closeModal(); toast('Блок отмечен как известный'); };
   $('#learnBlockBtn').onclick = () => {
@@ -1483,17 +1377,17 @@ function renderIntro() {
   if (autoSpeak() && !card.spoken) { card.spoken = true; setTimeout(() => tts.speak(w.word), 250); }
 }
 
-function startSession(words, { label = '', block = null } = {}) {
+function startSession(words, { label = '', block = null, mode = null, module = null } = {}) {
   if (!words.length) { toast('Нет слов для тренировки', 'error'); return; }
   const today = todayStr();
   session = {
-    queue: buildQueue(words, store.settings.mode),
+    queue: buildQueue(words, mode || store.settings.mode),
     pos: 0,
     words: Object.fromEntries(words.map(w => [w.id, { due: isNew(w) || dueOf(w) <= today, isNew: isNew(w), ok: true, errTypes: [] }])),
     started: Date.now(),
     answers: 0, correct: 0,
-    mode: store.settings.mode,
-    label, block,
+    mode: mode || store.settings.mode,
+    label, block, module,
     finished: false
   };
   card = null;
@@ -1533,6 +1427,7 @@ function renderTrainStart(view) {
       <button class="btn btn-primary btn-lg w-full" id="startBtn" ${available ? '' : 'disabled'}><i data-lucide="play"></i>${plan.due + plan.fresh ? 'Начать' : 'Дополнительная практика'}</button>
       ${!available ? '<p class="text-sm text-center text-slate-500 mt-2">Все слова отмечены как выученные. Верните часть слов в работу в словаре.</p>' : ''}
     </div>
+    ${recoBlock()}
     ${s.quiet ? `<div class="mt-3 rounded-2xl bg-amber-500/10 text-amber-700 dark:text-amber-300 text-sm px-4 py-3 flex items-center gap-2"><i data-lucide="headphone-off"></i>Тихий режим: без автоозвучки, аудирование заменено написанием.</div>` : ''}
 
     <div class="card p-5 mt-4 space-y-5">
@@ -1571,6 +1466,7 @@ function renderTrainStart(view) {
   const side = $('#sideSeg');
   if (side) side.onclick = e => { const b = e.target.closest('[data-side]'); if (!b) return; s.cardSide = b.dataset.side; store.saveSettings(); render(); };
   $('#startBtn').onclick = () => startSession(pickSessionWords(s.sessionSize));
+  bindReco(view);
 }
 
 function historyBlock() {
@@ -2008,6 +1904,7 @@ function finishSession(early = false) {
     st.u = Date.now();
     store.saveStats();
   }
+  if (session.module && session.answers && typeof saveModuleResult === 'function') saveModuleResult(session.module, session.report.accuracy);
   session.finished = true;
   store.history.push({ date: todayStr(), words, accuracy: session.report.accuracy, ok });
   store.saveHistory();
@@ -2136,7 +2033,7 @@ function renderStats(view) {
   view.innerHTML = `
     <div class="flex items-end justify-between gap-3 flex-wrap">
       <div>
-        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Статистика</h1>
+        <h1 class="text-2xl md:text-3xl font-extrabold tracking-tight">Прогресс и анализ</h1>
         <p class="text-slate-500 dark:text-slate-400 text-sm mt-1">${sync.enabled() ? 'Учитываются занятия со всех синхронизированных устройств' : 'Занятия на этом устройстве'}</p>
       </div>
       <div class="flex gap-2" id="periodSeg">
@@ -2144,7 +2041,9 @@ function renderStats(view) {
       </div>
     </div>
 
-    <div class="mt-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="mt-5">${analysisSection()}</div>
+
+    <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
       ${heroTile('Серия', st, plural(st, 'день подряд', 'дня подряд', 'дней подряд'), 'flame', 'text-orange-500')}
       ${heroTile('Сегодня', todayT.a, plural(todayT.a, 'ответ', 'ответа', 'ответов'), 'calendar-days', 'text-brand-500')}
       ${heroTile(`Точность за ${N} дн.`, acc === null ? '—' : acc + '%', `${sum.c} из ${sum.a} верно`, 'target', 'text-sky-500')}
@@ -2185,6 +2084,7 @@ function renderStats(view) {
   const hm = $('#heatmap'); hm.innerHTML = heatmap(hm.clientWidth); hm.scrollLeft = hm.scrollWidth;
   bindChartTips(view);
   view.querySelectorAll('[data-open]').forEach(el => el.onclick = () => openWordModal(el.dataset.open));
+  bindAnalysis(view);
 }
 
 function heroTile(label, value, sub, icon, color) {

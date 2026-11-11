@@ -176,3 +176,7 @@ mark.hl { background: rgb(31 165 131 / .2); color: inherit; border-radius: .3rem
 .word-tip-arrow { position: absolute; width: 12px; height: 12px; background: inherit; border: inherit; transform: translateX(-50%) rotate(45deg); }
 .word-tip.is-above .word-tip-arrow { bottom: -7px; border-top: 0; border-left: 0; }
 .word-tip.is-below .word-tip-arrow { top: -7px; border-bottom: 0; border-right: 0; }
+
+/* Подсветка слова, которое сейчас произносит диктор */
+.tw.tw-now { background: rgb(31 165 131 / .28); box-shadow: 0 0 0 2px rgb(31 165 131 / .28); color: inherit; }
+#tpSeek:disabled { opacity: .4; }
