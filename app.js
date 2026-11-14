@@ -1296,8 +1296,8 @@ function openOnboarding() {
           ${[['ru', 'Русский'], ['ua', 'Українська']].map(([v, l]) => `<button class="chip !h-11 justify-center ${st.lang === v ? 'is-active' : ''}" data-v="${v}">${l}</button>`).join('')}
         </div>
         <div class="mt-5 text-sm font-bold">С какого уровня начать</div>
-        <div class="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2" data-k="level">
-          ${[['A1', 'С нуля'], ['A2', 'Знаю основы'], ['B1', 'Средний'], ['B2', 'Выше среднего']].map(([v, l]) => `<button class="chip !h-auto py-2 flex-col ${st.level === v ? 'is-active' : ''}" data-v="${v}"><b>${v}</b><span class="text-[11px] opacity-80">${l}</span></button>`).join('')}
+        <div class="mt-2 grid grid-cols-3 sm:grid-cols-5 gap-2" data-k="level">
+          ${[['A1', 'С нуля'], ['A2', 'Знаю основы'], ['B1', 'Средний'], ['B2', 'Выше среднего'], ['C1', 'Продвинутый']].map(([v, l]) => `<button class="chip !h-auto py-2 flex-col ${st.level === v ? 'is-active' : ''}" data-v="${v}"><b>${v}</b><span class="text-[11px] opacity-80">${l}</span></button>`).join('')}
         </div>
         <div class="mt-5 text-sm font-bold">Новых слов в день</div>
         <div class="mt-2 grid grid-cols-4 gap-2" data-k="perDay">
