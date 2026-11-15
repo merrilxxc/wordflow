@@ -571,5 +571,214 @@ When the train finally started moving again, Mark realised that he was no longer
     ['Why had the train stopped?', ['It was broken', 'It was waiting for another train', 'There was snow'], 1],
     ['What was the old woman\'s job?', ['Teacher', 'Train conductor', 'Cook'], 1],
     ['What is surprising at the end?', ['The train was late', 'Nobody like her had been on the train', 'Mark lost his bag'], 1]
+  ] },
+/* ======================= B2 ======================= */
+{ id: 'b2-01', level: 'B2', title: 'The Call', ru: 'Тот звонок', topic: 'comm',
+  text: `Anna had worked in the call centre for almost two years when she got the call she would never forget. By then she had heard every possible excuse: lost cards, sick grandmothers, salaries that had never arrived. She had learned to stay calm and polite, even when people shouted at her.
+
+That afternoon the client was a man called Viktor. He owed the bank a small amount, but he hadn't paid anything for three months. Anna expected the usual story. Instead, there was a long silence, and then he said quietly that he had lost his job and had been too ashamed to answer the phone.
+
+Anna didn't read the script. She asked him what had happened, and she listened. It turned out that he had already found a new job, but his first salary wouldn't come until the end of the month. Together they agreed on a payment plan that he could actually manage.
+
+A month later Viktor called again, this time on his own. He had paid the first part of the debt, and he wanted to thank "the girl who hadn't treated him like a criminal". The manager who had heard the call played it at the next team meeting.
+
+Anna still remembers that day. She says it taught her that behind every number on the screen there is a person, and that sometimes the most effective thing you can do is simply stop talking and listen.`,
+  tr: `Анна проработала в колл-центре почти два года, когда ей поступил звонок, который она никогда не забудет. К тому времени она слышала все возможные оправдания: потерянные карты, больные бабушки, зарплаты, которые так и не пришли. Она научилась оставаться спокойной и вежливой, даже когда на неё кричали.
+
+В тот день клиентом был мужчина по имени Виктор. Он был должен банку небольшую сумму, но ничего не платил три месяца. Анна ожидала обычную историю. Вместо этого повисла долгая тишина, а потом он тихо сказал, что потерял работу и ему было слишком стыдно отвечать на звонки.
+
+Анна не стала читать скрипт. Она спросила, что случилось, и выслушала его. Оказалось, что он уже нашёл новую работу, но первая зарплата придёт только в конце месяца. Вместе они договорились о графике платежей, который был ему действительно по силам.
+
+Через месяц Виктор позвонил снова, на этот раз сам. Он оплатил первую часть долга и хотел поблагодарить «девушку, которая не обращалась с ним как с преступником». Руководитель, слышавший тот звонок, включил его на следующем собрании команды.
+
+Анна до сих пор помнит тот день. Она говорит, что он научил её: за каждым номером на экране стоит человек, и иногда самое действенное, что можно сделать, — просто замолчать и выслушать.`,
+  gloss: { 'call centre': 'колл-центр', ashamed: 'стыдно', script: 'скрипт (готовый текст разговора)', 'payment plan': 'график платежей', 'on his own': 'сам, по своей инициативе' },
+  q: [
+    ['How long had Anna worked in the call centre?', ['Two months', 'Almost two years', 'Ten years'], 1],
+    ['Why hadn\'t Viktor answered the phone?', ['He was abroad', 'He was ashamed because he had lost his job', 'His phone was broken'], 1],
+    ['What did Anna do differently?', ['She read the script faster', 'She listened to him', 'She called his boss'], 1],
+    ['What lesson did Anna learn?', ['Never trust clients', 'Behind every number there is a person', 'Scripts always work'], 1]
+  ] },
+{ id: 'b2-02', level: 'B2', title: 'A Month Without Social Media', ru: 'Месяц без соцсетей', topic: 'tech',
+  text: `I used to check my phone about a hundred times a day. The first thing I did in the morning was scroll through the news, and the last thing I saw before sleep was a bright screen. I wasn't happy about it, but I was so used to it that I didn't notice how much time it took.
+
+Last spring I decided to try an experiment: one month without social media. I deleted the apps, logged out of everything on my laptop and told my friends to call or text me if they needed me.
+
+The first week was harder than I had expected. My hand kept reaching for the phone on its own, especially in queues and on the bus. I felt bored and strangely anxious, as if I were missing something important.
+
+By the second week things began to change. I started reading on the bus again. I noticed that I was sleeping better and that I could concentrate on one task for much longer. I even called a few old friends instead of just liking their photos, and those conversations were far more interesting.
+
+When the month was over, I didn't go back to my old habits completely. I reinstalled one app, but I turned off the notifications and I only open it in the evening. It took me a while to get used to being "offline", but now I can't imagine going back to living with my eyes on a screen all day.`,
+  tr: `Раньше я проверял телефон примерно сто раз в день. Первое, что я делал утром, — листал новости, а последнее, что я видел перед сном, — яркий экран. Меня это не радовало, но я настолько к этому привык, что не замечал, сколько времени это отнимает.
+
+Прошлой весной я решил провести эксперимент: месяц без соцсетей. Я удалил приложения, вышел из всех аккаунтов на ноутбуке и попросил друзей звонить или писать сообщения, если я им понадоблюсь.
+
+Первая неделя оказалась тяжелее, чем я ожидал. Рука сама тянулась к телефону, особенно в очередях и в автобусе. Мне было скучно и почему-то тревожно, будто я пропускаю что-то важное.
+
+Ко второй неделе всё начало меняться. Я снова стал читать в автобусе. Я заметил, что стал лучше спать и могу гораздо дольше сосредотачиваться на одной задаче. Я даже позвонил нескольким старым друзьям вместо того, чтобы просто лайкать их фото, и эти разговоры оказались куда интереснее.
+
+Когда месяц закончился, я не вернулся к старым привычкам полностью. Я снова установил одно приложение, но отключил уведомления и открываю его только вечером. Мне понадобилось время, чтобы привыкнуть быть «офлайн», но теперь я не представляю, как можно снова жить, весь день глядя в экран.`,
+  gloss: { scroll: 'листать (ленту)', 'logged out': 'вышел из аккаунта', 'reaching for': 'тянулась к', liking: 'лайкать', reinstalled: 'установил заново', offline: 'офлайн, не в сети' },
+  q: [
+    ['How often did the author use to check the phone?', ['About ten times a day', 'About a hundred times a day', 'Only in the evening'], 1],
+    ['How did the author feel in the first week?', ['Relaxed and happy', 'Bored and anxious', 'Angry with friends'], 1],
+    ['What changed in the second week?', ['He slept better and read more', 'He bought a new phone', 'He stopped working'], 0],
+    ['What did he do after the month?', ['Deleted his phone number', 'Went back to all old habits', 'Reinstalled one app without notifications'], 2]
+  ] },
+{ id: 'b2-03', level: 'B2', title: 'Learning a Language at Thirty', ru: 'Учить язык в тридцать', topic: 'study',
+  text: `Many adults believe that it is too late to learn a foreign language. They remember boring lessons at school, lists of words they never managed to remember, and the fear of making mistakes in front of the class. So they keep putting it off, waiting for a "better time".
+
+Oleh decided to stop waiting when he turned thirty. He had always wanted to understand films without subtitles, and at work he kept avoiding meetings with foreign partners. He promised himself to study for twenty minutes every day, no matter how tired he was.
+
+At first he tried to learn everything at once: grammar, long word lists, difficult podcasts. After two weeks he felt like giving up. Then a friend suggested changing his approach. Instead of memorising lists, he started learning words in short sentences and repeating them a few days later. Instead of difficult podcasts, he began listening to simple stories, first with the text and then without it.
+
+Something interesting happened. He stopped worrying about understanding every word and started enjoying the process. He remembered to review the words he had forgotten, and he kept a small notebook of phrases he liked.
+
+A year later Oleh can watch his favourite series in English and take part in work calls without panic. His English isn't perfect, and he still makes mistakes, but he no longer avoids speaking. "The secret," he says, "is not talent. It's doing a little every day and not being afraid of looking silly."`,
+  tr: `Многие взрослые считают, что учить иностранный язык уже поздно. Они вспоминают скучные уроки в школе, списки слов, которые так и не удалось запомнить, и страх ошибиться перед всем классом. Поэтому они всё откладывают, ожидая «лучшего времени».
+
+Олег решил перестать ждать, когда ему исполнилось тридцать. Он всегда хотел понимать фильмы без субтитров, а на работе постоянно избегал встреч с иностранными партнёрами. Он пообещал себе заниматься по двадцать минут каждый день, как бы он ни устал.
+
+Сначала он пытался выучить всё сразу: грамматику, длинные списки слов, сложные подкасты. Через две недели ему захотелось всё бросить. Тогда друг посоветовал сменить подход. Вместо того чтобы зубрить списки, он начал учить слова в коротких предложениях и повторять их через несколько дней. Вместо сложных подкастов он стал слушать простые истории — сначала с текстом, потом без него.
+
+Случилось кое-что интересное. Он перестал переживать о том, чтобы понять каждое слово, и начал получать удовольствие от процесса. Он не забывал повторять забытые слова и вёл маленький блокнот с понравившимися фразами.
+
+Через год Олег может смотреть любимый сериал на английском и участвовать в рабочих созвонах без паники. Его английский не идеален, и он всё ещё ошибается, но больше не избегает разговоров. «Секрет, — говорит он, — не в таланте. А в том, чтобы делать понемногу каждый день и не бояться выглядеть глупо».`,
+  gloss: { 'putting it off': 'откладывают это', subtitles: 'субтитры', podcasts: 'подкасты', memorising: 'заучивание, зубрёжка', 'looking silly': 'выглядеть глупо' },
+  q: [
+    ['Why do many adults not start learning a language?', ['They have no money', 'They think it is too late', 'They don\'t like films'], 1],
+    ['What did Oleh promise himself?', ['To study for twenty minutes every day', 'To move abroad', 'To take an exam'], 0],
+    ['What did his friend suggest?', ['Giving up', 'Changing his approach', 'Studying for five hours a day'], 1],
+    ['What is the secret, according to Oleh?', ['Talent', 'A good teacher', 'A little practice every day'], 2]
+  ] },
+{ id: 'b2-04', level: 'B2', title: 'The New Office Rules', ru: 'Новые правила офиса', topic: 'work',
+  text: `Last month an email was sent to everyone in our company. It said that the office was being renovated and that, for the next three months, most of us would be working from home. The news was received in very different ways.
+
+Some people were delighted. They would no longer have to spend an hour in traffic every morning, and they could finally have lunch in their own kitchen. Others were worried. They were afraid that they would feel isolated, and that their work would not be noticed by the managers.
+
+Before the move, a few rules were introduced. Every team has a short video call at ten o'clock. Cameras must be switched on during meetings, and all tasks are recorded in a shared table, so everyone can see what has been done. Laptops and headsets were given to those who didn't have them, and some people even had their old chairs delivered home.
+
+After six weeks, the results are mixed. Productivity hasn't fallen; in some teams it has actually risen. However, many people have admitted that the days feel longer, because it is harder to separate work from home life. It is said that the management is now considering a hybrid model: three days at home and two in the office.
+
+For me, the biggest lesson has been that work is not a place, it is something you do. But I have also realised how much I miss the small conversations by the coffee machine — the ones that never appear in any report.`,
+  tr: `В прошлом месяце всем сотрудникам компании разослали письмо. В нём говорилось, что офис ремонтируют и следующие три месяца большинство из нас будет работать из дома. Новость восприняли очень по-разному.
+
+Некоторые были в восторге. Им больше не придётся каждое утро час стоять в пробках, и они наконец смогут обедать на собственной кухне. Другие волновались. Они боялись, что будут чувствовать себя оторванными от коллектива и что руководители не будут замечать их работу.
+
+Перед переходом ввели несколько правил. Каждая команда в десять часов проводит короткий видеозвонок. Во время встреч камеры должны быть включены, а все задачи записываются в общую таблицу, чтобы все видели, что уже сделано. Ноутбуки и гарнитуры выдали тем, у кого их не было, а некоторые даже заказали доставку своих старых стульев домой.
+
+Прошло шесть недель, и результаты неоднозначные. Продуктивность не упала, а в некоторых командах даже выросла. Однако многие признались, что дни кажутся длиннее, потому что труднее отделить работу от домашней жизни. Говорят, что руководство теперь рассматривает гибридную модель: три дня дома и два в офисе.
+
+Для меня главный урок в том, что работа — это не место, а то, что ты делаешь. Но я также понял, как мне не хватает коротких разговоров у кофемашины — тех, что никогда не попадают ни в один отчёт.`,
+  gloss: { delighted: 'в восторге', isolated: 'изолированный, оторванный', headsets: 'гарнитуры', mixed: 'неоднозначный', hybrid: 'гибридный', 'coffee machine': 'кофемашина', renovated: 'ремонтируется' },
+  q: [
+    ['Why were people asked to work from home?', ['The office was being renovated', 'The company was closing', 'There was a holiday'], 0],
+    ['Which rule was introduced?', ['No meetings at all', 'A short video call every day at ten', 'Working only at night'], 1],
+    ['What has happened to productivity?', ['It has fallen a lot', 'It hasn\'t fallen', 'Nobody knows'], 1],
+    ['What does the author miss?', ['Traffic jams', 'Small conversations by the coffee machine', 'Long reports'], 1]
+  ] },
+{ id: 'b2-05', level: 'B2', title: 'Running on Empty', ru: 'На пределе', topic: 'health',
+  text: `For months Daria told everyone she was fine. She was the first to arrive at the office and the last to leave. She answered emails at midnight and checked her phone during weekends. When friends asked her how she was, she said she was just a bit busy.
+
+Then one Monday she couldn't get out of bed. She wasn't ill in the usual sense — she simply had no energy left. Her doctor asked her how many hours she was sleeping and when she had last taken a holiday. Daria couldn't remember. The doctor told her that she was suffering from burnout and that she needed to rest, not just for a weekend, but properly.
+
+At first Daria felt guilty. She said she couldn't leave her team in the middle of a big project. Her manager surprised her: he told her that the project would survive, and that he would rather lose her for two weeks than for six months.
+
+During her time off, Daria started walking every morning and turned off work notifications on her phone. She also talked to a counsellor, who asked her why she found it so hard to say "no". Daria realised that she had been trying to prove something to everyone, including herself.
+
+Now she works normal hours and protects her evenings. She still loves her job, but she has learned an important rule: if you don't take care of yourself, nobody else will. And a tired person, she says, is not a hero — just a tired person.`,
+  tr: `Месяцами Дарья говорила всем, что у неё всё в порядке. Она приходила в офис первой и уходила последней. Она отвечала на письма в полночь и проверяла телефон по выходным. Когда друзья спрашивали, как она, она отвечала, что просто немного занята.
+
+А потом в один понедельник она не смогла встать с кровати. Она не была больна в привычном смысле — у неё просто не осталось сил. Врач спросил, сколько часов она спит и когда в последний раз была в отпуске. Дарья не смогла вспомнить. Врач сказал, что у неё выгорание и ей нужно отдохнуть — не просто на выходных, а по-настоящему.
+
+Сначала Дарья чувствовала вину. Она говорила, что не может бросить команду посреди большого проекта. Руководитель её удивил: он сказал, что проект выживет и что он лучше потеряет её на две недели, чем на полгода.
+
+Во время отдыха Дарья начала гулять каждое утро и отключила рабочие уведомления на телефоне. Ещё она поговорила с психологом, который спросил, почему ей так трудно сказать «нет». Дарья поняла, что пыталась что-то доказать всем, в том числе себе.
+
+Теперь она работает нормальные часы и бережёт свои вечера. Она по-прежнему любит свою работу, но усвоила важное правило: если ты сам о себе не позаботишься, никто другой этого не сделает. А уставший человек, говорит она, — не герой, а просто уставший человек.`,
+  gloss: { 'running on empty': 'на пределе, без сил', burnout: 'выгорание', properly: 'как следует, по-настоящему', 'time off': 'время отдыха, отпуск' },
+  q: [
+    ['What did Daria tell everyone for months?', ['That she was ill', 'That she was fine', 'That she wanted a new job'], 1],
+    ['What did the doctor say?', ['She had the flu', 'She was suffering from burnout', 'She should work more'], 1],
+    ['How did her manager react?', ['He was angry', 'He told her to rest', 'He gave her a new project'], 1],
+    ['What rule has Daria learned?', ['Work comes first', 'Take care of yourself', 'Never take holidays'], 1]
+  ] },
+{ id: 'b2-06', level: 'B2', title: 'Where Did the Money Go?', ru: 'Куда делись деньги?', topic: 'money',
+  text: `Every month the same thing happened to Maksym. His salary arrived, he felt rich for about a week, and then, somewhere around the twentieth, he looked at his bank account and wondered where the money had gone. He hadn't bought anything expensive. He must have spent it on something, but he had no idea what.
+
+One evening he finally decided to find out. He downloaded his bank statement for the last three months and put every payment into a simple table. The results shocked him. Coffee on the way to work, food delivery three or four times a week, subscriptions he had completely forgotten about — together they came to almost a third of his salary.
+
+"I should have done this years ago," he told his sister. She laughed and said that it could have been worse: at least he hadn't taken out a loan to cover it.
+
+Maksym didn't want to live like a monk, so he made a few realistic changes. He cancelled the subscriptions he didn't use, started cooking at the weekend for the next few days and allowed himself delivery only on Fridays. He also set up an automatic transfer: on the day his salary arrives, a fixed amount goes straight into a savings account.
+
+Six months later he has enough money saved for a good used car deposit. He says the most surprising thing is that he doesn't feel poorer. He might have felt limited at first, but now he simply knows where his money goes — and that feels much better than wondering.`,
+  tr: `Каждый месяц с Максимом происходило одно и то же. Приходила зарплата, он примерно неделю чувствовал себя богатым, а потом, где-то около двадцатого, смотрел на банковский счёт и не понимал, куда делись деньги. Ничего дорогого он не покупал. Наверное, он на что-то их потратил, но понятия не имел, на что.
+
+Однажды вечером он наконец решил разобраться. Он скачал выписку из банка за последние три месяца и занёс каждый платёж в простую таблицу. Результаты его потрясли. Кофе по дороге на работу, доставка еды три-четыре раза в неделю, подписки, о которых он совсем забыл, — вместе это составило почти треть зарплаты.
+
+«Надо было сделать это много лет назад», — сказал он сестре. Она рассмеялась и сказала, что могло быть и хуже: по крайней мере он не брал кредит, чтобы покрыть эти траты.
+
+Максим не хотел жить как монах, поэтому внёс несколько реалистичных изменений. Он отменил подписки, которыми не пользовался, начал готовить на выходных на несколько дней вперёд и разрешил себе доставку только по пятницам. А ещё он настроил автоматический перевод: в день зарплаты фиксированная сумма сразу уходит на накопительный счёт.
+
+Через полгода у него накопилось достаточно на первый взнос за хорошую подержанную машину. Он говорит, что самое удивительное — он не чувствует себя беднее. Возможно, сначала ему казалось, что он себя ограничивает, но теперь он просто знает, куда уходят его деньги, — и это гораздо приятнее, чем гадать.`,
+  gloss: { 'bank statement': 'банковская выписка', subscriptions: 'подписки', 'came to': 'составили (в сумме)', monk: 'монах', 'savings account': 'накопительный счёт', deposit: 'первый взнос', 'used car': 'подержанная машина' },
+  q: [
+    ['What happened around the twentieth of every month?', ['He got a bonus', 'He didn\'t know where his money had gone', 'He went on holiday'], 1],
+    ['How did Maksym find out where the money went?', ['He asked his sister', 'He put every payment into a table', 'He called the bank'], 1],
+    ['Which change did he make?', ['He stopped eating', 'He cancelled subscriptions he didn\'t use', 'He took a loan'], 1],
+    ['What is he saving for?', ['A flat', 'A used car', 'A trip abroad'], 1]
+  ] },
+{ id: 'b2-07', level: 'B2', title: 'The Bike Doctor', ru: 'Велосипедный доктор', topic: 'people',
+  text: `Every Saturday morning a small queue forms outside a garage at the end of our street. Children with flat tyres, students with squeaky brakes, a pensioner whose old bicycle is older than most of the people waiting. They have all come to see Mr Hnatiuk, whom everybody in the neighbourhood calls "the bike doctor".
+
+He used to be an engineer at a factory. When he retired, he found that he hated sitting at home with nothing to do. One day he repaired a neighbour's bike, then another, and soon people were knocking on his door every weekend. He has never asked for money. "If you want to pay me," he says, "bring a spare part or a cake for my wife."
+
+I asked him once why he does it. He said that he wished more people understood how little it takes to make someone's day better. A boy who can ride to school instead of walking for forty minutes, a delivery rider who doesn't lose a day's income — for him, that is enough of a reward.
+
+Last year the residents decided to thank him. Without telling him, they collected money and bought a proper workbench and a set of professional tools. When they gave him the present, he was so surprised that for once he didn't know what to say.
+
+I wish there were a "bike doctor" in every street. But maybe that's the point: anyone can be one. You don't need to change the world — you just need to fix what is in front of you.`,
+  tr: `Каждое субботнее утро у гаража в конце нашей улицы выстраивается небольшая очередь. Дети с пробитыми шинами, студенты со скрипящими тормозами, пенсионер, чей старый велосипед старше большинства ожидающих. Все они пришли к пану Гнатюку, которого весь район зовёт «велосипедным доктором».
+
+Раньше он был инженером на заводе. Выйдя на пенсию, он понял, что терпеть не может сидеть дома без дела. Однажды он починил соседу велосипед, потом ещё один, и вскоре люди стали стучаться к нему каждые выходные. Он никогда не просил денег. «Хотите отблагодарить, — говорит он, — принесите запчасть или торт для моей жены».
+
+Однажды я спросил его, зачем он это делает. Он ответил, что хотел бы, чтобы больше людей понимали, как мало нужно, чтобы сделать чей-то день лучше. Мальчик, который может доехать до школы, а не идти сорок минут пешком, курьер, который не теряет дневной заработок, — для него это достаточная награда.
+
+В прошлом году жители решили его отблагодарить. Ничего ему не говоря, они собрали деньги и купили настоящий верстак и набор профессиональных инструментов. Когда они вручили ему подарок, он так удивился, что впервые не знал, что сказать.
+
+Жаль, что не на каждой улице есть свой «велосипедный доктор». Но, может, в этом и смысл: им может стать любой. Не нужно менять мир — достаточно починить то, что перед тобой.`,
+  gloss: { 'flat tyres': 'пробитые (спущенные) шины', squeaky: 'скрипучий', pensioner: 'пенсионер', retired: 'вышел на пенсию', 'spare part': 'запчасть', 'delivery rider': 'курьер (на велосипеде)', workbench: 'верстак', brakes: 'тормоза' },
+  q: [
+    ['What does Mr Hnatiuk do on Saturdays?', ['He sells bikes', 'He repairs bikes for free', 'He teaches engineering'], 1],
+    ['What was his job before he retired?', ['Doctor', 'Engineer', 'Teacher'], 1],
+    ['What does he ask people to bring?', ['Money', 'A spare part or a cake', 'Nothing at all, ever'], 1],
+    ['What did the residents give him?', ['A new bike', 'A workbench and tools', 'A holiday'], 1]
+  ] },
+{ id: 'b2-08', level: 'B2', title: 'If I Had Known', ru: 'Если бы я знал', topic: 'feelings',
+  text: `Ten years ago Ihor was offered a job in another city. The salary was twice as high, the company was growing fast, and his friends told him he would be crazy to say no. But his mother was ill at the time, and he didn't want to leave her alone. He turned the offer down.
+
+For a long time he wondered what would have happened if he had accepted. He imagined a bigger flat, a better car, a more interesting life. Every time he saw a post from his former classmate, who had taken a similar job, he felt a little sting of regret.
+
+Then, a few years later, he learned that the company had gone bankrupt. Half of the people who had moved for it had been left without work in a city where they knew nobody. If he had gone, he might have been one of them.
+
+But that wasn't the real lesson. The real lesson came from the time he spent with his mother. She got better slowly, and during those years they talked more than ever before. He learned family stories he had never heard, and he cooked her favourite dishes from her old recipe book.
+
+Now, when Ihor catches himself thinking "if only I had…", he stops and asks a different question: "What did I get because I chose this way?" We can't know what the other road would have looked like. We only know the road we are on — and it is usually better than our regrets suggest.`,
+  tr: `Десять лет назад Игорю предложили работу в другом городе. Зарплата была вдвое выше, компания быстро росла, и друзья говорили, что отказаться было бы безумием. Но его мама тогда болела, и он не хотел оставлять её одну. Он отказался от предложения.
+
+Долгое время он думал о том, что было бы, если бы он согласился. Он представлял квартиру побольше, машину получше, жизнь поинтереснее. Каждый раз, когда он видел пост бывшего одноклассника, который согласился на похожую работу, он чувствовал лёгкий укол сожаления.
+
+А через несколько лет он узнал, что компания обанкротилась. Половина людей, переехавших ради неё, остались без работы в городе, где никого не знали. Если бы он тогда уехал, он мог бы оказаться одним из них.
+
+Но настоящий урок был не в этом. Настоящий урок пришёл из времени, проведённого с мамой. Она медленно поправлялась, и в те годы они разговаривали больше, чем когда-либо раньше. Он узнал семейные истории, которых никогда не слышал, и готовил её любимые блюда по старой книге рецептов.
+
+Теперь, когда Игорь ловит себя на мысли «если бы только я…», он останавливается и задаёт другой вопрос: «Что я получил благодаря тому, что выбрал этот путь?» Мы не можем знать, как выглядела бы другая дорога. Мы знаем только ту, по которой идём, — и обычно она лучше, чем подсказывают наши сожаления.`,
+  gloss: { 'turned the offer down': 'отказался от предложения', sting: 'укол', regret: 'сожаление', 'gone bankrupt': 'обанкротилась', 'catches himself': 'ловит себя', classmate: 'одноклассник' },
+  q: [
+    ['Why did Ihor refuse the job?', ['The salary was too low', 'His mother was ill', 'He didn\'t like the city'], 1],
+    ['What happened to the company?', ['It became very successful', 'It went bankrupt', 'It moved abroad'], 1],
+    ['What did Ihor gain from staying?', ['A bigger flat', 'Time and closeness with his mother', 'A promotion'], 1],
+    ['What question does Ihor ask now?', ['"Why didn\'t I go?"', '"What did I get because I chose this way?"', '"How much could I earn?"'], 1]
   ] }
 ];

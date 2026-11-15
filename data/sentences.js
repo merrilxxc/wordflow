@@ -458,6 +458,143 @@ window.WF_SENT = {
       ['[S:The flight] [X:was] [V:cancelled] [M*:because of] [O:the storm].', 'Рейс отменили из-за шторма.', 'Рейс скасували через шторм.', ['because', 'so']],
       ['[S:He] [V:is] [A:rich], [C*:but] [S:he] [X:is] [N:not] [A:happy].', 'Он богат, но не счастлив.', 'Він багатий, але не щасливий.', ['so', 'because'], ["he is rich, but he isn't happy", "he's rich but he's not happy"]]
     ]
+  },
+  /* ======================= B2 ======================= */
+  {
+    id: 'b2-past-perfect', level: 'B2', title: 'Past Perfect: что случилось раньше', sub: '«Когда я пришёл, фильм уже начался»',
+    formula: ['[S] + had + [V3] (3-я форма)', 'Когда …, [S] + had already + [V3]'],
+    explain: [
+      'Past Perfect нужен, когда в прошлом есть <b>две точки</b> и надо показать, что одно случилось <b>раньше</b> другого: <i>When I arrived, the film <b>had</b> already <b>started</b></i>.',
+      'Форма одна для всех: <b>had + 3-я форма</b> (worked, gone, seen, done). В речи сокращают: I\'d, she\'d. Отрицание — <b>hadn\'t</b>, вопрос — <b>Had you…?</b>',
+      'Частые подсказки: <b>already, just, never, before, by the time</b> («к тому моменту, как»). Если порядок событий и так понятен (<i>I came home and had dinner</i>), хватает Past Simple.'
+    ],
+    s: [
+      ['[C:When] [S:I] [V:arrived], [S:the film] [X*:had] [T:already] [V:started].', 'Когда я пришёл, фильм уже начался.', 'Коли я прийшов, фільм уже почався.', ['has', 'was'], ['the film had already started when i arrived']],
+      ['[S:She] [X:had] [T:never] [V*:seen] [O:the sea] [C:before] [S:that trip].', 'До той поездки она никогда не видела моря.', 'До тієї поїздки вона ніколи не бачила моря.', ['saw', 'see']],
+      ['[T:By the time] [S:we] [V:got] [P:to the station], [S:the train] [X:had] [V*:left].', 'К тому времени, как мы добрались до вокзала, поезд уже ушёл.', 'На той час, коли ми дісталися вокзалу, потяг уже поїхав.', ['leaved', 'left had']],
+      ['[S:I] [X*:hadn\'t] [V:eaten] [T:all day], [C:so] [S:I] [V:was] [A:very hungry].', 'Я весь день не ел, поэтому был очень голоден.', 'Я цілий день не їв, тому був дуже голодний.', ['didn\'t', 'haven\'t'], ['i had not eaten all day, so i was very hungry']],
+      ['[S:He] [V:realised] [C:that] [S:he] [X:had] [V*:forgotten] [O:his keys].', 'Он понял, что забыл ключи.', 'Він зрозумів, що забув ключі.', ['forgot', 'forget']],
+      ['[X*:Had] [S:you] [V:met] [O:her] [C:before] [S:the meeting]?', 'Ты был знаком с ней до встречи?', 'Ти був знайомий з нею до зустрічі?', ['Did', 'Have']]
+    ]
+  },
+  {
+    id: 'b2-used-to', level: 'B2', title: 'used to / be used to / get used to', sub: '«Раньше я курил», «Я привык рано вставать»',
+    formula: ['Раньше (больше нет): [S] + used to + [V]', 'Привык: [S] + am / is / are used to + [V]-ing', 'Привыкаю: [S] + get used to + [V]-ing'],
+    explain: [
+      '<b>used to + глагол</b> — то, что было раньше регулярно, а теперь нет: <i>I <b>used to smoke</b></i> — «Раньше я курил (а сейчас нет)». Отрицание и вопрос — через did: <i>I didn\'t use to…, Did you use to…?</i>',
+      '<b>be used to + -ing</b> — «привык, мне это привычно»: <i>I\'m used to getting up early</i>. После to здесь идёт существительное или -ing, а не голый глагол.',
+      '<b>get used to + -ing</b> — «привыкать, постепенно привыкнуть»: <i>You\'ll get used to working from home</i>.'
+    ],
+    s: [
+      ['[S:I] [V*:used to] [V:smoke], [C:but] [S:I] [V:quit] [T:five years ago].', 'Раньше я курил, но бросил пять лет назад.', 'Раніше я курив, але кинув п\'ять років тому.', ['use to', 'am used to']],
+      ['[S:We] [V*:used to] [V:live] [P:near the river].', 'Раньше мы жили у реки.', 'Раніше ми жили біля річки.', ['are used to', 'got used to']],
+      ['[S:I] [X:am] [A*:used to] [V:getting up] [T:early].', 'Я привык вставать рано.', 'Я звик вставати рано.', ['use to', 'used'], ["i'm used to getting up early"]],
+      ['[S:She] [X:is] [N:not] [A:used to] [V*:working] [P:at night].', 'Она не привыкла работать по ночам.', 'Вона не звикла працювати ночами.', ['work', 'worked'], ["she isn't used to working at night", "she's not used to working at night"]],
+      ['[S:You] [X:will] [V*:get used to] [O:the new system].', 'Ты привыкнешь к новой системе.', 'Ти звикнеш до нової системи.', ['use to', 'used'], ["you'll get used to the new system"]],
+      ['[X*:Did] [S:you] [V:use to] [V:play] [O:football] [P:at school]?', 'Ты в школе играл в футбол?', 'Ти в школі грав у футбол?', ['Were', 'Do']]
+    ]
+  },
+  {
+    id: 'b2-ger-inf', level: 'B2', title: 'Герундий или инфинитив: doing / to do', sub: '«Бросил курить» или «остановился, чтобы покурить»',
+    formula: ['[V] + [V]-ing: enjoy, avoid, finish, mind, keep, suggest', '[V] + to + [V]: want, decide, plan, hope, promise, refuse', 'Смысл меняется: stop / remember / forget / try'],
+    explain: [
+      'После одних глаголов идёт <b>-ing</b>: <i>enjoy cooking, avoid arguing, finish working, keep trying, mind waiting</i>. После других — <b>to + глагол</b>: <i>want to leave, decide to stay, promise to call, refuse to pay</i>.',
+      'Есть пары, где смысл меняется: <b>stop doing</b> — перестать делать, <b>stop to do</b> — остановиться, чтобы сделать. <b>remember doing</b> — помнить, что делал; <b>remember to do</b> — не забыть сделать.',
+      'После предлога всегда <b>-ing</b>: <i>interested in learning, good at listening, before leaving, instead of complaining</i>.'
+    ],
+    s: [
+      ['[S:I] [V:enjoy] [O*:cooking] [P:at home].', 'Мне нравится готовить дома.', 'Мені подобається готувати вдома.', ['to cook', 'cook']],
+      ['[S:He] [V:decided] [O*:to change] [O:his job].', 'Он решил сменить работу.', 'Він вирішив змінити роботу.', ['changing', 'change']],
+      ['[S:She] [V:stopped] [O*:smoking] [T:last year].', 'Она бросила курить в прошлом году.', 'Вона кинула курити минулого року.', ['to smoke', 'smoke']],
+      ['[S:We] [V:stopped] [M*:to buy] [O:some coffee].', 'Мы остановились, чтобы купить кофе.', 'Ми зупинилися, щоб купити кави.', ['buying', 'for buy']],
+      ['[V:Remember] [O*:to call] [O:the client] [T:tomorrow].', 'Не забудь позвонить клиенту завтра.', 'Не забудь зателефонувати клієнту завтра.', ['calling', 'call']],
+      ['[S:I] [X:am] [A:interested] [M:in] [V*:learning] [O:new skills].', 'Мне интересно осваивать новые навыки.', 'Мені цікаво опановувати нові навички.', ['learn', 'to learn'], ["i'm interested in learning new skills"]]
+    ]
+  },
+  {
+    id: 'b2-passive', level: 'B2', title: 'Пассив сложнее: is being done, have it done', sub: '«Офис ремонтируют», «Я подстригся»',
+    formula: ['Сейчас: [S] + is / are being + [V3]', 'Уже: [S] + has / have been + [V3]', 'Кто-то делает для меня: [S] + have / get + [O] + [V3]'],
+    explain: [
+      'Пассив («делается, сделано») бывает в любом времени: <i>The office <b>is being renovated</b></i> — «офис сейчас ремонтируют»; <i>The report <b>has been sent</b></i> — «отчёт уже отправлен»; <i>It <b>will be done</b> tomorrow</i>.',
+      '<b>have / get something done</b> — услугу делает другой человек: <i>I <b>had my hair cut</b></i> — «я подстригся (в парикмахерской)». <i>We <b>got the car repaired</b></i>.',
+      'В новостях: <b>It is said that…</b> («говорят, что…»), <b>He is believed to be…</b> («считается, что он…»).'
+    ],
+    s: [
+      ['[S:The office] [X*:is being] [V:renovated] [T:this week].', 'Офис ремонтируют на этой неделе.', 'Офіс ремонтують цього тижня.', ['is', 'has being']],
+      ['[S:The report] [X*:has been] [V:sent] [P:to the client].', 'Отчёт уже отправлен клиенту.', 'Звіт уже надіслано клієнту.', ['has', 'was being']],
+      ['[S:I] [V*:had] [O:my hair] [V:cut] [T:yesterday].', 'Вчера я подстригся.', 'Вчора я підстригся.', ['cut', 'did']],
+      ['[S:We] [V:need] [V:to get] [O:the car] [V*:repaired].', 'Нам нужно отремонтировать машину (в сервисе).', 'Нам треба відремонтувати машину (в сервісі).', ['repair', 'repairing']],
+      ['[S:It] [X:is] [V*:said] [C:that] [S:the company] [V:will close].', 'Говорят, что компания закроется.', 'Кажуть, що компанія закриється.', ['says', 'saying']],
+      ['[S:The new rules] [X*:will be] [V:introduced] [T:next month].', 'Новые правила введут в следующем месяце.', 'Нові правила запровадять наступного місяця.', ['will', 'are being']]
+    ]
+  },
+  {
+    id: 'b2-reported', level: 'B2', title: 'Косвенная речь: he said that…', sub: '«Он сказал, что опоздает»',
+    formula: ['[S] + said (that) + [S] + время на шаг назад', '[S] + told + [кому] + (that)…', '[S] + asked + if / where / what + [S] + [V]'],
+    explain: [
+      'Когда пересказываем чужие слова, время обычно сдвигается <b>на шаг назад</b>: <i>«I am tired» → He said he <b>was</b> tired. «I will call» → She said she <b>would</b> call. «I have finished» → He said he <b>had</b> finished.</i>',
+      '<b>say</b> — без «кому»: <i>He said that…</i>. <b>tell</b> — обязательно «кому»: <i>He told <b>me</b> that…</i>. Нельзя: <i>He said me</i>.',
+      'В пересказанном вопросе нет do/did и порядок как в обычном предложении: <i>«Where do you live?» → She asked where <b>I lived</b>. «Are you ready?» → He asked <b>if</b> I was ready.</i>'
+    ],
+    s: [
+      ['[S:He] [V:said] [C:that] [S:he] [V*:would be] [A:late].', 'Он сказал, что опоздает.', 'Він сказав, що запізниться.', ['will be', 'is'], ['he said he would be late', "he said that he'd be late"]],
+      ['[S:She] [V*:told] [O:me] [C:that] [S:she] [V:was] [A:tired].', 'Она сказала мне, что устала.', 'Вона сказала мені, що втомилася.', ['said', 'spoke'], ['she told me she was tired']],
+      ['[S:The client] [V:said] [C:that] [S:he] [X*:had] [T:already] [V:paid].', 'Клиент сказал, что уже заплатил.', 'Клієнт сказав, що вже заплатив.', ['has', 'was']],
+      ['[S:My boss] [V:asked] [C*:if] [S:I] [V:was] [A:ready].', 'Начальник спросил, готов ли я.', 'Начальник запитав, чи я готовий.', ['that', 'what']],
+      ['[S:She] [V:asked] [C:where] [S:I] [V*:lived].', 'Она спросила, где я живу.', 'Вона запитала, де я живу.', ['did live', 'do live']],
+      ['[S:He] [V:promised] [C:that] [S:he] [V*:would call] [O:me] [T:back].', 'Он пообещал, что перезвонит мне.', 'Він пообіцяв, що передзвонить мені.', ['will call', 'calls']]
+    ]
+  },
+  {
+    id: 'b2-modal-past', level: 'B2', title: 'Модальные в прошлом: should have, must have', sub: '«Надо было сказать», «Наверное, он забыл»',
+    formula: ['Сожаление / упрёк: [S] + should have + [V3]', 'Уверен, что было: [S] + must have + [V3]', 'Не может быть: [S] + can\'t have + [V3]', 'Было возможно: [S] + could / might have + [V3]'],
+    explain: [
+      '<b>should have done</b> — «надо было сделать (а не сделал)»: <i>I <b>should have saved</b> more money.</i> <b>shouldn\'t have done</b> — «не надо было»: <i>You shouldn\'t have said that.</i>',
+      '<b>must have done</b> — почти уверен, что так и было: <i>He <b>must have forgotten</b></i> — «он, наверное, забыл». <b>can\'t have done</b> — «не может быть, чтобы…»: <i>She can\'t have seen us.</i>',
+      '<b>could have / might have done</b> — было возможно, но неизвестно или не случилось: <i>It <b>could have been</b> worse</i> — «могло быть и хуже». В речи: should\'ve, must\'ve, could\'ve.'
+    ],
+    s: [
+      ['[S:I] [X*:should have] [V:saved] [O:more money].', 'Надо было мне откладывать больше денег.', 'Треба було мені відкладати більше грошей.', ['should', 'must have'], ["i should've saved more money"]],
+      ['[S:You] [X*:shouldn\'t have] [V:said] [O:that].', 'Не надо было тебе этого говорить.', 'Не треба було тобі цього казати.', ['mustn\'t have', 'can\'t have'], ['you should not have said that']],
+      ['[S:He] [X*:must have] [V:forgotten] [O:about the meeting].', 'Он, наверное, забыл о встрече.', 'Він, мабуть, забув про зустріч.', ['should have', 'can\'t have'], ["he must've forgotten about the meeting"]],
+      ['[S:She] [X*:can\'t have] [V:seen] [O:us] — [S:it] [V:was] [A:too dark].', 'Не может быть, чтобы она нас видела, — было слишком темно.', 'Не може бути, щоб вона нас бачила, — було надто темно.', ['must have', 'should have'], ['she cannot have seen us — it was too dark']],
+      ['[S:It] [X*:could have] [V:been] [A:worse].', 'Могло быть и хуже.', 'Могло бути й гірше.', ['must have', 'should'], ["it could've been worse"]],
+      ['[S:They] [X*:might have] [V:missed] [O:the train].', 'Возможно, они опоздали на поезд.', 'Можливо, вони запізнилися на потяг.', ['must', 'should'], ["they might've missed the train", 'they may have missed the train']]
+    ]
+  },
+  {
+    id: 'b2-wish', level: 'B2', title: 'I wish / If only: сожаления и мечты', sub: '«Жаль, что я не знаю», «Жаль, что я не пошёл»',
+    formula: ['О настоящем: [S] + wish + [S] + [V2] (were, had, knew)', 'О прошлом: [S] + wish + [S] + had + [V3]', 'Раздражение: [S] + wish + [S] + would + [V]'],
+    explain: [
+      'О настоящем — время на шаг назад: <i>I <b>wish I knew</b> the answer</i> — «жаль, что я не знаю». С to be часто <b>were</b> для всех: <i>I wish I <b>were</b> taller.</i>',
+      'О прошлом — <b>had + 3-я форма</b>: <i>I <b>wish I had gone</b> to the party</i> — «жаль, что я не пошёл». <b>If only…</b> — то же самое, только эмоциональнее.',
+      '<b>wish + would</b> — когда раздражает чужое поведение: <i>I wish you <b>would stop</b> interrupting me</i> — «хоть бы ты перестал меня перебивать».'
+    ],
+    s: [
+      ['[S:I] [V:wish] [S:I] [V*:knew] [O:the answer].', 'Жаль, что я не знаю ответа.', 'Шкода, що я не знаю відповіді.', ['know', 'had know']],
+      ['[S:I] [V:wish] [S:I] [V*:had] [O:more free time].', 'Хотел бы я иметь больше свободного времени.', 'Хотів би я мати більше вільного часу.', ['have', 'has']],
+      ['[S:She] [V:wishes] [S:she] [V*:were] [P:at home] [T:now].', 'Она хотела бы сейчас быть дома.', 'Вона хотіла б зараз бути вдома.', ['is', 'be'], ['she wishes she was at home now']],
+      ['[S:I] [V:wish] [S:I] [X*:had] [V:gone] [P:to the party].', 'Жаль, что я не пошёл на вечеринку.', 'Шкода, що я не пішов на вечірку.', ['have', 'would']],
+      ['[C:If only] [S:we] [X:had] [V*:listened] [P:to him]!', 'Если бы только мы его послушали!', 'Якби ж ми його послухали!', ['listen', 'were listening']],
+      ['[S:I] [V:wish] [S:you] [X*:would] [V:stop] [V:interrupting] [O:me].', 'Хоть бы ты перестал меня перебивать.', 'Хоч би ти перестав мене перебивати.', ['will', 'had']]
+    ]
+  },
+  {
+    id: 'b2-cond3', level: 'B2', title: 'Третий тип условий: если бы тогда…', sub: '«Если бы я знал, я бы пришёл»',
+    formula: ['If + [S] + had + [V3], [S] + would have + [V3]', 'Смешанный: If + [S] + had + [V3], [S] + would + [V] (now)'],
+    explain: [
+      'Третий тип — о прошлом, которое уже <b>не изменить</b>: <i>If I <b>had known</b>, I <b>would have come</b></i> — «если бы я знал (а я не знал), я бы пришёл».',
+      'В части с if — <b>had + 3-я форма</b>, в другой части — <b>would have + 3-я форма</b>. Вместо would можно could / might: <i>We could have won.</i> В речи: I\'d have, would\'ve.',
+      'Смешанный тип: прошлое влияет на <b>сейчас</b>: <i>If I had taken that job, I <b>would be</b> rich now</i> — «если бы я тогда взял ту работу, сейчас был бы богат».'
+    ],
+    s: [
+      ['[C:If] [S:I] [X:had] [V:known], [S:I] [X*:would have] [V:come].', 'Если бы я знал, я бы пришёл.', 'Якби я знав, я б прийшов.', ['will have', 'would'], ["if i had known, i'd have come", "i would have come if i had known"]],
+      ['[C:If] [S:we] [X*:had] [V:left] [T:earlier], [S:we] [X:wouldn\'t have] [V:missed] [O:the flight].', 'Если бы мы выехали раньше, мы бы не опоздали на рейс.', 'Якби ми виїхали раніше, ми б не запізнилися на рейс.', ['have', 'would']],
+      ['[S:She] [X:would have] [V*:passed] [O:the exam] [C:if] [S:she] [X:had] [V:studied] [A:harder].', 'Она бы сдала экзамен, если бы занималась усерднее.', 'Вона б склала іспит, якби вчилася старанніше.', ['pass', 'passing']],
+      ['[C:If] [S:you] [X:had] [V:asked] [O:me], [S:I] [X*:could have] [V:helped].', 'Если бы ты меня попросил, я бы мог помочь.', 'Якби ти мене попросив, я міг би допомогти.', ['can have', 'could']],
+      ['[C:If] [S:I] [X:hadn\'t] [V*:missed] [O:the bus], [S:I] [X:wouldn\'t have] [V:met] [O:her].', 'Если бы я не опоздал на автобус, я бы с ней не познакомился.', 'Якби я не запізнився на автобус, я б із нею не познайомився.', ['miss', 'didn\'t miss']],
+      ['[C:If] [S:I] [X:had] [V:taken] [O:that job], [S:I] [X*:would be] [A:rich] [T:now].', 'Если бы я тогда взял ту работу, сейчас был бы богат.', 'Якби я тоді взяв ту роботу, зараз був би багатий.', ['would have', 'will be'], ["if i had taken that job, i'd be rich now"]]
+    ]
   }
   ]
 };
