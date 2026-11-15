@@ -267,6 +267,8 @@ function renderModule(view, m) {
           }).join('')}
         </div>`, p.steps[0].done)}
 
+      ${memoSection(m, idx)}
+
       ${m.lesson ? step(++n, 'grammar', 'Грамматика', `
         <div class="font-bold">${esc(loc(m.lesson, 'title'))}</div>
         <div class="text-sm text-slate-500 dark:text-slate-400">${esc(loc(m.lesson, 'sub'))}</div>
@@ -302,6 +304,7 @@ function renderModule(view, m) {
   const ol = $('#openLesson'); if (ol) ol.onclick = () => openFromCourse('lesson', m.lesson.id);
   const ot = $('#openText'); if (ot) ot.onclick = () => openFromCourse('text', m.text.id);
   $('#testBtn').onclick = () => startModuleTest(m);
+  const th = $('#trainHard'); if (th) th.onclick = () => trainBlock(hardWordsOf(m).slice(0, 12).map(h => h.b.base_id), `${m.level} · Модуль ${m.n}: трудные слова`, { all: true });
 }
 
 function openFromCourse(kind, id) {
@@ -449,9 +452,10 @@ function openBaseWordModal(b) {
       <div class="mt-3 flex gap-2">
         <button class="btn btn-ghost !h-10" data-say="${esc(b.word)}"><i data-lucide="volume-2"></i>Слушать</button>
         <button class="btn btn-ghost !h-10" id="bwSlow"><i data-lucide="snail"></i>Медленно</button>
+        <button class="btn btn-ghost !h-10" data-memo="${esc(b.base_id)}"><i data-lucide="lightbulb"></i>Как запомнить</button>
       </div>
       <div class="mt-4 text-2xl font-bold text-brand-600 dark:text-brand-300">${esc(ua ? b.ua : b.ru)}</div>
-      <div class="mt-4 space-y-2">${exampleBlock(b.ex1, ua ? b.ex1ua : b.ex1ru, b.word)}${exampleBlock(b.ex2, ua ? b.ex2ua : b.ex2ru, b.word)}</div>
+      <div class="mt-4 space-y-2">${exampleBlock(b.ex1, ua ? b.ex1ua : b.ex1ru, b.word)}${exampleBlock(b.ex2, ua ? b.ex2ua : b.ex2ru, b.word)}${exampleBlock(b.ex3 || '', ua ? b.ex3ua : b.ex3ru, b.word)}</div>
       <div class="mt-5 grid grid-cols-2 gap-2">
         <button class="btn btn-ghost btn-lg" id="bwKnow"><i data-lucide="check-check"></i>Уже знаю</button>
         <button class="btn btn-primary btn-lg" id="bwLearn"><i data-lucide="list-plus"></i>Учить</button>
@@ -682,3 +686,163 @@ function openGuide() {
   $('#modalRoot [data-close-btn]').onclick = closeModal;
   $('#guideGo').onclick = () => { closeModal(); location.hash = '#/train'; };
 }
+
+/* ---------- 5. Как запомнить: подсказки для трудных слов ---------- */
+const LS_ASSOC = 'wf.assoc.v1';   // свои ассоциации к словам (только на этом устройстве)
+const assocStore = {
+  all() { try { return JSON.parse(localStorage.getItem(LS_ASSOC)) || {}; } catch { return {}; } },
+  get(id) { return this.all()[id] || ''; },
+  set(id, text) {
+    const a = this.all();
+    if (text.trim()) a[id] = text.trim(); else delete a[id];
+    try { localStorage.setItem(LS_ASSOC, JSON.stringify(a)); } catch { /* память переполнена */ }
+  }
+};
+
+/** Расстояние Левенштейна с ранним выходом (для «не путай с») */
+function editDist(a, b, max) {
+  if (Math.abs(a.length - b.length) > max) return max + 1;
+  let prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i]; let best = i;
+    for (let j = 1; j <= b.length; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+      if (cur[j] < best) best = cur[j];
+    }
+    if (best > max) return max + 1;
+    prev = cur;
+  }
+  return prev[b.length];
+}
+
+/** Материал для подсказки: готовая заметка, однокоренные, похожие слова, совет по приёму */
+function memoFor(b) {
+  const H = window.WF_HINTS || {};
+  const word = b.word.toLowerCase();
+  const hint = H[word] ? H[word][isUA() ? 1 : 0] : '';
+  const single = !word.includes(' ');
+  const stem = !single ? null : word.length >= 6 ? word.slice(0, Math.min(7, Math.max(5, word.length - 2))) : word.length === 5 ? word : null;
+  const family = [], confuse = [], seen = new Set([b.base_id]);
+  // слова, упомянутые в заметке (например, «не путай с …»)
+  const STOP = new Set(['the', 'and', 'with', 'from', 'this', 'that', 'your', 'have', 'like', 'end', 'result', 'action', 'never', 'one', 'two', 'all']);
+  if (hint) for (const m of hint.matchAll(/[A-Za-z][a-z'-]{3,}/g)) {
+    if (STOP.has(m[0].toLowerCase())) continue;
+    const x = BASE.list.find(y => y.word.toLowerCase() === m[0].toLowerCase());
+    if (x && !seen.has(x.base_id) && x.word.toLowerCase() !== word) { confuse.push(x); seen.add(x.base_id); }
+  }
+  for (const x of BASE.list) {
+    if (seen.has(x.base_id)) continue;
+    const xw = x.word.toLowerCase();
+    if (xw === word) { family.push(x); seen.add(x.base_id); continue; }   // то же слово, другая часть речи
+    if (!single || xw.includes(' ')) continue;
+    if (stem && xw.startsWith(stem)) { family.push(x); seen.add(x.base_id); continue; }
+    if (word.length >= 4 && editDist(xw, word, word.length >= 6 ? 2 : 1) <= (word.length >= 6 ? 2 : 1)) { confuse.push(x); seen.add(x.base_id); }
+  }
+  const tips = {
+    v: L10('Представь, что делаешь это прямо сейчас, и скажи вслух: «I … every day» / «I … yesterday».', 'Уяви, що робиш це просто зараз, і скажи вголос: «I … every day» / «I … yesterday».'),
+    adj: L10('Опиши этим словом знакомого человека, вещь или свой день — одной короткой фразой.', 'Опиши цим словом знайому людину, річ або свій день — однією короткою фразою.'),
+    n: L10('Представь этот предмет ярко и «положи» его в конкретное место своей квартиры — так проще вспомнить.', 'Уяви цей предмет яскраво і «поклади» його в конкретне місце своєї квартири — так легше згадати.'),
+    adv: L10('Добавь слово к своему обычному действию: «I work …», «I drive …».', 'Додай слово до своєї звичайної дії: «I work …», «I drive …».'),
+    phr: L10('Учите фразу целиком, как одно слово. Придумайте ситуацию, где вы её скажете.', 'Вчіть фразу цілком, як одне слово. Придумайте ситуацію, де ви її скажете.')
+  };
+  const tip = tips[b.pos] || L10('Найди похоже звучащее русское слово и придумай с ним смешную картинку — чем абсурднее, тем лучше запомнится.', 'Знайди схоже за звучанням слово і придумай із ним смішну картинку — що абсурдніше, то краще запам\'ятається.');
+  return { hint, family: family.slice(0, 5), confuse: confuse.slice(0, 4), tip };
+}
+
+/** Трудные слова модуля: 2+ ошибки или начатые, но ещё слабые */
+function hardWordsOf(m, idx = wordIndex()) {
+  return m.items.map(b => [b, idx.get(b.base_id)])
+    .filter(([, w]) => w && !isKnown(w) && (w.lapses >= 2 || (isWeak(w) && touches(w) >= 1)))
+    .sort((x, y) => y[1].lapses - x[1].lapses || touches(x[1]) - touches(y[1]))
+    .map(([b, w]) => ({ b, w }));
+}
+
+/** Секция модуля «Как запомнить трудные слова» */
+function memoSection(m, idx) {
+  const hard = hardWordsOf(m, idx).slice(0, 12);
+  const H = window.WF_HINTS || {};
+  const traps = m.items.filter(b => H[b.word.toLowerCase()] && !hard.some(h => h.b.base_id === b.base_id)).slice(0, 10);
+  const ua = isUA();
+  const chip = (b, extra = '') => `<button class="btn btn-ghost !h-auto !py-2 !px-3 text-left" data-memo="${esc(b.base_id)}">
+      <span class="font-bold">${esc(b.word)}</span><span class="text-xs text-slate-500 dark:text-slate-400 ml-1.5">${esc((ua ? b.ua : b.ru).split(/[,;(]/)[0])}</span>${extra}</button>`;
+  return `
+    <section class="card p-4 md:p-5">
+      <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="lightbulb" class="text-amber-500" style="width:1.05rem;height:1.05rem"></i>${L10('Как запомнить трудные слова', 'Як запам\'ятати складні слова')}</h2>
+      ${hard.length ? `
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">${L10('Слова, на которых вы ошибаетесь или которые ещё не закрепились. Нажмите на слово — будут подсказки, похожие слова и место для своей ассоциации.', 'Слова, у яких ви помиляєтеся або які ще не закріпилися. Натисніть на слово — будуть підказки, схожі слова й місце для своєї асоціації.')}</p>
+        <div class="mt-3 flex flex-wrap gap-2">${hard.map(h => chip(h.b, h.w.lapses ? `<span class="ml-1.5 text-[11px] font-bold text-rose-500">×${h.w.lapses}</span>` : '')).join('')}</div>
+        <button class="btn btn-primary !h-10 mt-3" id="trainHard"><i data-lucide="repeat"></i>${L10('Повторить трудные', 'Повторити складні')} · ${hard.length}</button>`
+      : `<p class="text-sm text-slate-500 dark:text-slate-400 mt-1">${L10('Пока трудных слов нет. Когда вы ошибётесь в слове 2 раза или оно долго не закрепляется, оно появится здесь с подсказками.', 'Поки складних слів немає. Коли ви помилитеся в слові 2 рази або воно довго не закріплюється, воно з\'явиться тут із підказками.')}</p>`}
+      ${traps.length ? `
+        <div class="mt-4 text-sm font-bold">${L10('Слова-ловушки модуля', 'Слова-пастки модуля')}</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400">${L10('Ложные друзья, похожие слова, «немые» буквы — лучше знать заранее.', 'Хибні друзі, схожі слова, «німі» літери — краще знати заздалегідь.')}</div>
+        <div class="mt-2 flex flex-wrap gap-2">${traps.map(b => chip(b)).join('')}</div>` : ''}
+    </section>`;
+}
+
+/** Окно «Как запомнить» для слова из общей базы */
+function openMemo(baseId) {
+  const b = BASE.map.get(baseId);
+  if (!b) return;
+  const ua = isUA();
+  const w = store.words.find(x => x.base_id === baseId);
+  const mm = memoFor(b);
+  const row = x => `<button class="w-full text-left flex items-baseline gap-2 py-1.5" data-memo="${esc(x.base_id)}">
+      <span class="font-bold">${esc(x.word)}</span><span class="text-xs text-slate-400">${esc(POS_NAMES[x.pos] || x.pos)}</span>
+      <span class="text-sm text-slate-500 dark:text-slate-400 truncate">— ${esc(ua ? x.ua : x.ru)}</span></button>`;
+  openModal(`
+    <div class="p-5 md:p-7">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2">${levelBadge(b.level)}<span class="text-xs text-slate-400">${esc(POS_NAMES[b.pos] || b.pos)}${w && w.lapses ? ` · <span class="text-rose-500 font-semibold">${L10('ошибок', 'помилок')}: ${w.lapses}</span>` : ''}</span></div>
+          <div class="mt-2 text-3xl font-extrabold tracking-tight break-words">${esc(b.word)} <button class="icon-btn !w-9 !h-9 align-middle" data-say="${esc(b.word)}"><i data-lucide="volume-2"></i></button></div>
+          <div class="text-slate-400">${esc(b.transcription)}</div>
+          <div class="mt-1 text-xl font-bold text-brand-600 dark:text-brand-300">${esc(ua ? b.ua : b.ru)}</div>
+        </div>
+        <button class="icon-btn" data-close-btn aria-label="Закрыть"><i data-lucide="x"></i></button>
+      </div>
+
+      ${mm.hint ? `<div class="mt-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 p-4 flex gap-3">
+        <i data-lucide="triangle-alert" class="text-amber-500 shrink-0" style="width:1.1rem;height:1.1rem"></i><div class="text-sm leading-relaxed">${esc(mm.hint)}</div></div>` : ''}
+
+      <div class="mt-4 rounded-2xl bg-brand-500/10 p-4 flex gap-3">
+        <i data-lucide="lightbulb" class="text-brand-500 shrink-0" style="width:1.1rem;height:1.1rem"></i>
+        <div class="text-sm leading-relaxed"><b>${L10('Приём', 'Прийом')}:</b> ${esc(mm.tip)}</div>
+      </div>
+
+      <div class="mt-4 space-y-2">${exampleBlock(b.ex1, ua ? b.ex1ua : b.ex1ru, b.word)}${exampleBlock(b.ex2, ua ? b.ex2ua : b.ex2ru, b.word)}${exampleBlock(b.ex3 || '', ua ? b.ex3ua : b.ex3ru, b.word)}</div>
+
+      ${mm.family.length ? `<div class="mt-4"><div class="text-sm font-bold">${L10('Однокоренные и другие значения', 'Спільнокореневі та інші значення')}</div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1">${L10('Учите вместе — одно подтягивает другое.', 'Вчіть разом — одне підтягує інше.')}</div>
+        <div class="divide-y divide-slate-100 dark:divide-white/5">${mm.family.map(row).join('')}</div></div>` : ''}
+
+      ${mm.confuse.length ? `<div class="mt-4"><div class="text-sm font-bold">${L10('Не путайте с', 'Не плутайте з')}</div>
+        <div class="divide-y divide-slate-100 dark:divide-white/5">${mm.confuse.map(row).join('')}</div></div>` : ''}
+
+      <div class="mt-4">
+        <label class="text-sm font-bold" for="assocInput">${L10('Моя ассоциация', 'Моя асоціація')}</label>
+        <div class="text-xs text-slate-500 dark:text-slate-400 mb-1.5">${L10('Своя картинка или фраза запоминается лучше любой чужой. Сохраняется на этом устройстве.', 'Своя картинка чи фраза запам\'ятовується краще за будь-яку чужу. Зберігається на цьому пристрої.')}</div>
+        <textarea id="assocInput" class="input" rows="2" placeholder="${L10('Например: «quiet — КВАЙ-ет, тихий кот в углу»', 'Наприклад: «quiet — КВАЙ-ет, тихий кіт у кутку»')}">${esc(assocStore.get(baseId))}</textarea>
+      </div>
+
+      <div class="mt-5 grid grid-cols-2 gap-2">
+        <button class="btn btn-ghost btn-lg" data-close-btn2><i data-lucide="check"></i>${L10('Понятно', 'Зрозуміло')}</button>
+        <button class="btn btn-primary btn-lg" id="memoTrain"><i data-lucide="zap"></i>${L10('Тренировать', 'Тренувати')}</button>
+      </div>
+    </div>`, { wide: true });
+  const root = $('#modalRoot');
+  bindSay(root);
+  const save = () => assocStore.set(baseId, $('#assocInput').value);
+  $('#assocInput').oninput = save;
+  $('[data-close-btn]', root).onclick = () => { save(); closeModal(); };
+  $('[data-close-btn2]', root).onclick = () => { save(); closeModal(); };
+  $('#memoTrain').onclick = () => { save(); closeModal(); trainBlock([baseId], `${L10('Трудное слово', 'Складне слово')}: ${b.word}`, { all: true }); };
+}
+
+// Любая кнопка с data-memo открывает подсказку (модули, карточки слов, «не путайте с»)
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-memo]');
+  if (!t) return;
+  e.preventDefault(); e.stopPropagation();
+  openMemo(t.dataset.memo);
+}, true);

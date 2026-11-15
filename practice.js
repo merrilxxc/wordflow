@@ -282,8 +282,10 @@ function startMyExamples() {
   // сначала слова, которые сейчас в работе, затем остальные
   const pick = [...shuffle(ws.filter(w => w.priority === 'active')), ...shuffle(ws.filter(w => w.priority !== 'active'))].slice(0, 10);
   const items = pick.map((w, i) => {
-    const useSecond = w.example2_en && Math.random() < 0.5 && tokensOf(w.example2_en).length <= 12;
-    const en = useSecond ? w.example2_en : w.example1_en, tr = useSecond ? w.example2_ua : w.example1_ua;
+    // случайный из примеров слова (1–3), подходящих по длине
+    const opts = [[w.example1_en, w.example1_ua], [w.example2_en, w.example2_ua], [w.example3_en, w.example3_ua]]
+      .filter(([e, t]) => e && t && tokensOf(e).length >= 3 && tokensOf(e).length <= 12);
+    const [en, tr] = opts.length ? opts[Math.floor(Math.random() * opts.length)] : [w.example1_en, w.example1_ua];
     return { kind: 'word', t: i % 2 ? 'gap' : 'build', en, tr, w };
   });
   practice.run = { title: 'Предложения из моих слов', items, pos: 0, answers: 0, correct: 0, started: Date.now(), wrong: [] };

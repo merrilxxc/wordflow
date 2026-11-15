@@ -60,6 +60,12 @@ const BASE = (() => {
     level: r[0], word: r[1], pos: r[2], transcription: r[3], ru: r[4], ua: r[5], topic: r[6],
     ex1: r[7], ex1ru: r[8], ex1ua: r[9], ex2: r[10], ex2ru: r[11], ex2ua: r[12], block: r[13]
   }));
+  // третий пример (data/ex3.js): [англ., рус., укр.]; если укр. ещё нет — показываем рус.
+  const EX3 = window.WF_EX3 || {};
+  for (const b of list) {
+    const e = EX3[b.base_id];
+    if (e) { b.ex3 = e[0]; b.ex3ru = e[1]; b.ex3ua = e[2] || e[1]; }
+  }
   return { list, map: new Map(list.map(b => [b.base_id, b])), version: raw.version };
 })();
 const topicName = t => (TOPICS[t] || [t, t])[store.settings.lang === 'ua' ? 1 : 0];
@@ -273,7 +279,8 @@ function hydrate(w) {
     word: b.word, transcription: b.transcription, level: b.level, pos: b.pos, topic: b.topic,
     translation: ua ? b.ua : b.ru,
     example1_en: b.ex1, example1_ua: ua ? b.ex1ua : b.ex1ru,
-    example2_en: b.ex2, example2_ua: ua ? b.ex2ua : b.ex2ru
+    example2_en: b.ex2, example2_ua: ua ? b.ex2ua : b.ex2ru,
+    example3_en: b.ex3 || '', example3_ua: (ua ? b.ex3ua : b.ex3ru) || ''
   });
   return w;
 }
@@ -1080,12 +1087,13 @@ function openWordModal(id) {
       <div class="mt-3 flex items-center gap-2">
         <button class="btn btn-primary !h-10" data-say="${esc(w.word)}"><i data-lucide="volume-2"></i>Слушать</button>
         <button class="btn btn-ghost !h-10" id="slowBtn"><i data-lucide="snail"></i>Медленно</button>
+        ${w.base_id ? `<button class="btn btn-ghost !h-10" data-memo="${esc(w.base_id)}"><i data-lucide="lightbulb"></i><span class="hidden sm:inline">Как запомнить</span></button>` : ''}
       </div>
       <div class="mt-5 text-xl font-bold">${esc(w.translation)}</div>
 
       <div class="mt-5 space-y-3">
         ${exampleBlock(w.example1_en, w.example1_ua, w.word)}
-        ${exampleBlock(w.example2_en, w.example2_ua, w.word)}
+        ${exampleBlock(w.example2_en, w.example2_ua, w.word)}${exampleBlock(w.example3_en, w.example3_ua, w.word)}
         ${!w.example1_en && !w.example2_en ? '<div class="text-sm text-slate-400">Примеров пока нет — добавьте их через «Изменить».</div>' : ''}
       </div>
 
@@ -1357,7 +1365,7 @@ function renderIntro() {
         <div class="mt-4 text-2xl font-bold text-brand-600 dark:text-brand-300">${esc(w.translation)}</div>
         ${w.pos ? `<div class="text-xs text-slate-400 mt-1">${esc(POS_NAMES[w.pos] || w.pos)}${w.topic ? ' · ' + esc(topicName(w.topic)) : ''}</div>` : ''}
       </div>
-      ${w.example1_en || w.example2_en ? `<div class="mt-5 space-y-2">${exampleBlock(w.example1_en, w.example1_ua, w.word)}${exampleBlock(w.example2_en, w.example2_ua, w.word)}</div>` : ''}
+      ${w.example1_en || w.example2_en ? `<div class="mt-5 space-y-2">${exampleBlock(w.example1_en, w.example1_ua, w.word)}${exampleBlock(w.example2_en, w.example2_ua, w.word)}${exampleBlock(w.example3_en, w.example3_ua, w.word)}</div>` : ''}
     </div>
     <div class="mt-4 grid grid-cols-2 gap-2">
       <button class="btn btn-ghost btn-lg" id="knowIntro"><i data-lucide="check-check"></i>Уже знаю</button>
@@ -1693,7 +1701,7 @@ function renderFlashcard() {
     ${!en && w.transcription ? `<div class="text-slate-400 mt-1">${esc(w.transcription)}</div>` : ''}
     ${!en ? speakBtn : `<div class="text-sm text-slate-400 mt-1">${esc(w.word)}</div>`}
     ${w.example1_en || w.example2_en ? `<div class="mt-4 space-y-2 w-full text-left">
-      ${exampleBlock(w.example1_en, w.example1_ua, w.word)}${exampleBlock(w.example2_en, w.example2_ua, w.word)}</div>` : ''}`;
+      ${exampleBlock(w.example1_en, w.example1_ua, w.word)}${exampleBlock(w.example2_en, w.example2_ua, w.word)}${exampleBlock(w.example3_en, w.example3_ua, w.word)}</div>` : ''}`;
 
   $('#exercise').innerHTML = `
     <div class="flip-scene" id="flipScene">
@@ -1849,7 +1857,7 @@ function renderFeedback() {
       </div>
       ${w.example1_en || w.example2_en ? `<div class="mt-4 space-y-2">
         ${exampleBlock(w.example1_en, w.example1_ua, w.word)}
-        ${exampleBlock(w.example2_en, w.example2_ua, w.word)}</div>` : ''}
+        ${exampleBlock(w.example2_en, w.example2_ua, w.word)}${exampleBlock(w.example3_en, w.example3_ua, w.word)}</div>` : ''}
       <button class="btn btn-primary btn-lg w-full mt-4" id="nextBtn">Далее <i data-lucide="arrow-right"></i></button>
     </div>`;
   bindSay($('#feedback'));
