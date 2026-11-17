@@ -82,7 +82,8 @@ const EX_TYPES = [
   { id: 2, name: 'Написание',      icon: 'keyboard' },
   { id: 3, name: 'Аудирование',    icon: 'headphones' },
   { id: 4, name: 'Карточки',       icon: 'gallery-horizontal-end' },
-  { id: 5, name: 'Новое слово',    icon: 'sparkles' }
+  { id: 5, name: 'Новое слово',    icon: 'sparkles' },
+  { id: 6, name: 'По картинке',    icon: 'image' }
 ];
 
 const DEFAULT_SETTINGS = {
@@ -106,6 +107,7 @@ const DEFAULT_SETTINGS = {
   courseLevel: 'A1',      // с какого уровня начинать курс
   courseTopics: [],       // темы курса (пусто — все)
   quiet: false,           // тихий режим: без звука, без аудирования
+  pics: true,             // картинки к словам и упражнение «По картинке»
   onboarded: false        // приветствие пройдено
 };
 
@@ -1089,6 +1091,7 @@ function openWordModal(id) {
         <button class="btn btn-ghost !h-10" id="slowBtn"><i data-lucide="snail"></i>Медленно</button>
         ${w.base_id ? `<button class="btn btn-ghost !h-10" data-memo="${esc(w.base_id)}"><i data-lucide="lightbulb"></i><span class="hidden sm:inline">Как запомнить</span></button>` : ''}
       </div>
+      ${window.WFIMG ? WFIMG.box(w.base_id, 'wf-pic-md mt-4') : ''}
       <div class="mt-5 text-xl font-bold">${esc(w.translation)}</div>
 
       <div class="mt-5 space-y-3">
@@ -1356,6 +1359,7 @@ function renderIntro() {
     <div class="card p-6 md:p-8 pop">
       <div class="text-center">
         <div class="inline-flex items-center gap-1.5 text-xs font-bold text-violet-500 bg-violet-500/10 px-2.5 py-1 rounded-full"><i data-lucide="sparkles" style="width:.85rem;height:.85rem"></i>Новое слово${w.level ? ' · ' + esc(w.level) : ''}</div>
+        ${window.WFIMG ? WFIMG.box(w.base_id, 'wf-pic-lg mx-auto mt-4') : ''}
         <div class="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight break-words">${esc(w.word)}</div>
         ${w.transcription ? `<div class="text-slate-400 mt-1">${esc(w.transcription)}</div>` : ''}
         <div class="mt-3 flex justify-center gap-2">
@@ -1520,6 +1524,10 @@ function makeCard() {
   if (!w) { session.pos++; saveSession(); return null; }
   card = { item: it, w, answered: false, ok: null, given: '' };
   if (it.type === 3 && store.settings.quiet) it.type = 2;   // тихий режим: аудирование заменяется написанием
+  // У слова есть картинка — «Выбор перевода» в половине случаев заменяется упражнением «По картинке»
+  if (it.type === 0 && !it.picChecked) { it.picChecked = true; if (window.WFIMG && WFIMG.has(w.base_id) && Math.random() < 0.5) it.type = 6; }
+  if (it.type === 6 && !(window.WFIMG && WFIMG.has(w.base_id))) it.type = 0;
+  if (it.type === 6) card.options = shuffle([w.word, ...picDistractors(w)]);
   if (it.type === 0) card.options = shuffle([w.translation, ...distractors(w, 'translation')]);
   if (it.type === 1) {
     const letters = [...w.word].map((ch, i) => ({ ch, i })).filter(x => x.ch !== ' ');
@@ -1563,8 +1571,8 @@ function renderCard(view) {
       <div id="feedback"></div>
     </div>`;
   $('#quitBtn').onclick = quitSession;
-  [renderChoice, renderScramble, renderSpelling, renderListening, renderFlashcard, renderIntro][item.type]();
-  if (card.answered && item.type < 4) renderFeedback();
+  [renderChoice, renderScramble, renderSpelling, renderListening, renderFlashcard, renderIntro, renderPicture][item.type]();
+  if (card.answered && (item.type < 4 || item.type === 6)) renderFeedback();
   icons();
 }
 
@@ -1591,6 +1599,35 @@ function renderChoice() {
     answer(val === w.translation, val);
   };
   if (!card.answered && autoSpeak() && !card.spoken) { card.spoken = true; setTimeout(() => tts.speak(w.word), 250); }
+}
+// 6) По картинке: видишь картинку — выбираешь английское слово
+function renderPicture() {
+  const { w } = card;
+  $('#exercise').innerHTML = `
+    ${promptCard(`
+      <div class="text-sm text-slate-400 font-semibold">${store.settings.lang === 'ua' ? 'Що на картинці?' : 'Что на картинке?'}</div>
+      ${WFIMG.box(w.base_id, 'wf-pic-lg mx-auto mt-3')}
+      ${card.answered ? '' : `<div class="text-xs text-slate-400 mt-3">${esc(POS_NAMES[w.pos] || '')}</div>`}`)}
+    <div class="mt-4 grid gap-2" id="opts">
+      ${card.options.map((o, i) => `<button class="option ${optCls(o, w.word)}" data-o="${i}" ${card.answered ? 'disabled' : ''}>
+        <span class="kbd">${i + 1}</span><span class="flex-1">${esc(o)}</span></button>`).join('')}
+    </div>`;
+  $('#opts').onclick = e => {
+    const b = e.target.closest('[data-o]'); if (!b || card.answered) return;
+    const val = card.options[+b.dataset.o];
+    answer(val === w.word, val);
+  };
+}
+/** Неверные варианты для «По картинке»: слова той же части речи, лучше — тоже с картинкой (тогда не угадать по «абстрактности») */
+function picDistractors(w) {
+  const target = normAnswer(w.word);
+  const withPic = new Set(WFIMG.keys());
+  const pool = BASE.list.filter(b => normAnswer(b.word) !== target && b.pos === w.pos);
+  const score = b => (withPic.has(b.base_id) ? 2 : 0) + (b.level === w.level ? 1 : 0) + (b.topic === w.topic ? 0.5 : 0);
+  const best = shuffle(pool).sort((a, b) => score(b) - score(a));
+  const out = [];
+  for (const b of best) { if (out.length >= 3) break; if (!out.some(o => normAnswer(o) === normAnswer(b.word))) out.push(b.word); }
+  return out;
 }
 function optCls(o, correct) {
   if (!card.answered) return '';
@@ -1850,10 +1887,11 @@ function renderFeedback() {
       </div>
       <div class="mt-3 flex items-center gap-3">
         <button class="icon-btn !w-9 !h-9 shrink-0" data-say="${esc(w.word)}" aria-label="Озвучить"><i data-lucide="volume-2"></i></button>
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1">
           <div class="text-xl font-extrabold break-words">${esc(w.word)} <span class="text-sm font-semibold text-slate-400">${esc(w.transcription)}</span></div>
           <div class="text-slate-600 dark:text-slate-300">${esc(w.translation)}</div>
         </div>
+        ${window.WFIMG && card.item.type !== 6 ? WFIMG.box(w.base_id, 'wf-pic-sm shrink-0') : ''}
       </div>
       ${w.example1_en || w.example2_en ? `<div class="mt-4 space-y-2">
         ${exampleBlock(w.example1_en, w.example1_ua, w.word)}
@@ -1997,7 +2035,7 @@ document.addEventListener('keydown', e => {
     else if (card.flipped && (e.key === 'ArrowLeft' || e.key === '1')) gradeCard(false);
     return;
   }
-  if ((t === 0 || (t === 3 && card.showOptions)) && /^[1-4]$/.test(e.key)) {
+  if ((t === 0 || t === 6 || (t === 3 && card.showOptions)) && /^[1-4]$/.test(e.key)) {
     const b = $(`#opts [data-o="${+e.key - 1}"]`); if (b) b.click();
   }
   if (t === 1 && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
@@ -2436,6 +2474,12 @@ function renderSettings(view) {
       <label class="flex items-center justify-between gap-4">
         <span><span class="text-sm font-bold block">Тихий режим (без наушников)</span><span class="text-xs text-slate-500 dark:text-slate-400">Без автоозвучки; аудирование заменяется написанием. Переключатель — значок наушников вверху</span></span>
         <input type="checkbox" id="quietChk" class="w-5 h-5 accent-brand-500" ${s.quiet ? 'checked' : ''}></label>
+      <label class="flex items-center justify-between gap-4">
+        <span><span class="text-sm font-bold block">Картинки к словам</span><span class="text-xs text-slate-500 dark:text-slate-400">На карточках слов и в упражнении «По картинке». Фото — Pixabay, рисунки — Microsoft Fluent Emoji</span></span>
+        <input type="checkbox" id="picsChk" class="w-5 h-5 accent-brand-500" ${s.pics !== false ? 'checked' : ''}></label>
+      ${window.WFIMG && WFIMG.count() ? `<div class="flex items-center justify-between gap-4">
+        <span><span class="text-sm font-bold block">Картинки без интернета</span><span class="text-xs text-slate-500 dark:text-slate-400" id="picsDlInfo">Скачать все ${WFIMG.count()} картинок заранее (≈${WFIMG.totalMB()} МБ). Иначе каждая загружается, когда слово впервые показывается</span></span>
+        <button class="btn btn-ghost !h-10 shrink-0" id="picsDl"><i data-lucide="download"></i>Скачать</button></div>` : ''}
     </section>
 
     <section class="card p-5 mt-4 space-y-5">
@@ -2494,6 +2538,14 @@ function renderSettings(view) {
   $('#langSeg2').onclick = e => { const b = e.target.closest('[data-lang]'); if (b) setLang(b.dataset.lang); };
   $('#perDaySeg2').onclick = e => { const b = e.target.closest('[data-n]'); if (!b) return; s.newPerDay = +b.dataset.n; store.saveSettings(); render(); };
   $('#quietChk').onchange = e => setQuiet(e.target.checked);
+  $('#picsChk').onchange = e => { s.pics = e.target.checked; store.saveSettings(); toast(s.pics ? 'Картинки включены' : 'Картинки выключены', 'info'); };
+  const dl = $('#picsDl');
+  if (dl) dl.onclick = async () => {
+    dl.disabled = true;
+    await WFIMG.downloadAll((d, n) => { dl.innerHTML = `${Math.round(d / n * 100)}%`; });
+    dl.innerHTML = '<i data-lucide="check"></i>Готово'; icons();
+    toast('Картинки сохранены для работы без интернета');
+  };
   if (tts.supported) {
     $('#voiceSel').onchange = e => { s.voice = e.target.value; store.saveSettings(); tts.speak('Hello'); };
     $('#rateRange').oninput = e => { s.rate = +e.target.value; $('#rateVal').textContent = s.rate; store.saveSettings(); };

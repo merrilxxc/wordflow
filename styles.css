@@ -180,3 +180,14 @@ mark.hl { background: rgb(31 165 131 / .2); color: inherit; border-radius: .3rem
 /* Подсветка слова, которое сейчас произносит диктор */
 .tw.tw-now { background: rgb(31 165 131 / .28); box-shadow: 0 0 0 2px rgb(31 165 131 / .28); color: inherit; }
 #tpSeek:disabled { opacity: .4; }
+
+/* ---------- Картинки к словам ---------- */
+.wf-pic { position: relative; aspect-ratio: 4 / 3; border-radius: 1rem; overflow: hidden; background: rgba(148, 163, 184, .12); }
+.wf-pic img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0; transition: opacity .25s ease; }
+.wf-pic.is-loaded img { opacity: 1; }
+.wf-pic.is-emoji { background: rgba(31, 165, 131, .08); }
+.wf-pic.is-emoji img { object-fit: contain; padding: 14%; }
+.wf-pic-lg { width: 100%; max-width: 300px; }
+.wf-pic-md { width: 100%; max-width: 260px; }
+.wf-pic-sm { width: 88px; border-radius: .75rem; }
+.wf-pic-sm.is-emoji img { padding: 10%; }

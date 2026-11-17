@@ -454,6 +454,7 @@ function openBaseWordModal(b) {
         <button class="btn btn-ghost !h-10" id="bwSlow"><i data-lucide="snail"></i>Медленно</button>
         <button class="btn btn-ghost !h-10" data-memo="${esc(b.base_id)}"><i data-lucide="lightbulb"></i>Как запомнить</button>
       </div>
+      ${window.WFIMG ? WFIMG.box(b.base_id, 'wf-pic-md mt-4') : ''}
       <div class="mt-4 text-2xl font-bold text-brand-600 dark:text-brand-300">${esc(ua ? b.ua : b.ru)}</div>
       <div class="mt-4 space-y-2">${exampleBlock(b.ex1, ua ? b.ex1ua : b.ex1ru, b.word)}${exampleBlock(b.ex2, ua ? b.ex2ua : b.ex2ru, b.word)}${exampleBlock(b.ex3 || '', ua ? b.ex3ua : b.ex3ru, b.word)}</div>
       <div class="mt-5 grid grid-cols-2 gap-2">
@@ -823,6 +824,15 @@ function openMemo(baseId) {
         <label class="text-sm font-bold" for="assocInput">${L10('Моя ассоциация', 'Моя асоціація')}</label>
         <div class="text-xs text-slate-500 dark:text-slate-400 mb-1.5">${L10('Своя картинка или фраза запоминается лучше любой чужой. Сохраняется на этом устройстве.', 'Своя картинка чи фраза запам\'ятовується краще за будь-яку чужу. Зберігається на цьому пристрої.')}</div>
         <textarea id="assocInput" class="input" rows="2" placeholder="${L10('Например: «quiet — КВАЙ-ет, тихий кот в углу»', 'Наприклад: «quiet — КВАЙ-ет, тихий кіт у кутку»')}">${esc(assocStore.get(baseId))}</textarea>
+        ${window.WFIMG ? `<div class="mt-3 flex items-center gap-3">
+          ${WFIMG.has(baseId) ? WFIMG.box(baseId, 'wf-pic-sm shrink-0') : `<div class="wf-pic wf-pic-sm shrink-0 grid place-items-center text-slate-400"><i data-lucide="image"></i></div>`}
+          <div class="flex flex-wrap gap-2">
+            <label class="btn btn-ghost !h-10 cursor-pointer"><i data-lucide="image-plus"></i>${WFIMG.isOwn(baseId) ? L10('Заменить картинку', 'Замінити картинку') : L10('Своя картинка', 'Своя картинка')}
+              <input type="file" accept="image/*" id="ownPicInput" class="hidden"></label>
+            ${WFIMG.isOwn(baseId) ? `<button class="btn btn-ghost !h-10" id="ownPicDel"><i data-lucide="trash-2"></i>${L10('Убрать свою', 'Прибрати свою')}</button>` : ''}
+          </div>
+        </div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">${L10('Фото с телефона, скриншот, кадр из игры или фильма — своя картинка заменит стандартную.', 'Фото з телефона, скріншот, кадр із гри чи фільму — своя картинка замінить стандартну.')}</div>` : ''}
       </div>
 
       <div class="mt-5 grid grid-cols-2 gap-2">
@@ -837,6 +847,16 @@ function openMemo(baseId) {
   $('[data-close-btn]', root).onclick = () => { save(); closeModal(); };
   $('[data-close-btn2]', root).onclick = () => { save(); closeModal(); };
   $('#memoTrain').onclick = () => { save(); closeModal(); trainBlock([baseId], `${L10('Трудное слово', 'Складне слово')}: ${b.word}`, { all: true }); };
+  const pic = $('#ownPicInput');
+  if (pic) pic.onchange = async () => {
+    const f = pic.files && pic.files[0]; if (!f) return;
+    save();
+    try { await WFIMG.setOwn(baseId, f); toast(L10('Картинка сохранена', 'Картинку збережено')); }
+    catch (e) { toast(L10('Не удалось открыть картинку', 'Не вдалося відкрити картинку'), 'error'); }
+    openMemo(baseId);
+  };
+  const del = $('#ownPicDel');
+  if (del) del.onclick = async () => { save(); await WFIMG.delOwn(baseId); toast(L10('Своя картинка убрана', 'Свою картинку прибрано'), 'info'); openMemo(baseId); };
 }
 
 // Любая кнопка с data-memo открывает подсказку (модули, карточки слов, «не путайте с»)
