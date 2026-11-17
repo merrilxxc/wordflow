@@ -405,6 +405,7 @@ function renderEncyclopedia(view) {
       <div class="card divide-y divide-slate-100 dark:divide-white/5 overflow-hidden">
         ${shown.map(b => { const st = wordState(idx.get(b.base_id)); return `<div class="flex items-center gap-3 px-3 md:px-4 py-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-white/5" data-bid="${esc(b.base_id)}">
           <button class="icon-btn !w-8 !h-8 shrink-0" data-say="${esc(b.word)}" aria-label="Озвучить"><i data-lucide="volume-2" style="width:.95rem;height:.95rem"></i></button>
+          ${window.WFIMG ? WFIMG.slot(b.base_id, 'wf-pic-xs') : ''}
           <div class="flex-1 min-w-0">
             <div class="font-bold truncate">${esc(b.word)} <span class="text-xs font-normal text-slate-400">${esc(b.transcription)}</span></div>
             <div class="text-sm text-slate-500 dark:text-slate-400 truncate">${esc(ua ? b.ua : b.ru)}</div>

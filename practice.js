@@ -424,6 +424,7 @@ function drawTrans(ex) {
   if (done) return;
   const inp = $('#tIn');
   setTimeout(() => inp.focus({ preventScroll: true }), 50);
+  if (typeof autoLayout === 'function') autoLayout(inp);
   inp.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#tForm').requestSubmit(); } };
   $('#tHint').onclick = () => {
     ex.hints = (ex.hints || 0) + 1;
@@ -432,7 +433,7 @@ function drawTrans(ex) {
   };
   $('#tForm').onsubmit = e => {
     e.preventDefault();
-    const v = inp.value.trim();
+    const v = (typeof fixLayout === 'function' ? fixLayout(inp.value) : inp.value).trim();
     if (!v) return;
     const r = checkTranslation(v, ex.refs);
     ex.typo = r === 'typo';

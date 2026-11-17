@@ -191,3 +191,6 @@ mark.hl { background: rgb(31 165 131 / .2); color: inherit; border-radius: .3rem
 .wf-pic-md { width: 100%; max-width: 260px; }
 .wf-pic-sm { width: 88px; border-radius: .75rem; }
 .wf-pic-sm.is-emoji img { padding: 10%; }
+/* миниатюра в списках словаря; пустое место той же ширины держит колонку ровной */
+.wf-pic-xs { width: 46px; aspect-ratio: 4 / 3; border-radius: .6rem; flex: none; }
+.wf-pic-xs.is-emoji img { padding: 8%; }

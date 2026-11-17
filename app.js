@@ -199,6 +199,44 @@ function plural(n, one, few, many) {
   return many;
 }
 /** Сравнение ответа: регистр, лишние пробелы, разные апострофы не важны */
+/* ----- Раскладка клавиатуры -----
+   Если включена русская или украинская раскладка, а человек печатает английское слово,
+   буквы приходят кириллицей. Переводим их по положению клавиш, чтобы не следить за раскладкой. */
+const KB_RU_EN = {
+  'й': 'q', 'ц': 'w', 'у': 'e', 'к': 'r', 'е': 't', 'н': 'y', 'г': 'u', 'ш': 'i', 'щ': 'o', 'з': 'p', 'х': '[', 'ъ': ']', 'ї': ']',
+  'ф': 'a', 'ы': 's', 'і': 's', 'в': 'd', 'а': 'f', 'п': 'g', 'р': 'h', 'о': 'j', 'л': 'k', 'д': 'l', 'ж': ';', 'э': "'", 'є': "'",
+  'я': 'z', 'ч': 'x', 'с': 'c', 'м': 'v', 'и': 'b', 'т': 'n', 'ь': 'm', 'б': ',', 'ю': '.', 'ё': '`', 'ґ': '\\'
+};
+const hasCyr = s => /[Ѐ-ӿ]/.test(s);
+/** Строку с кириллицей превращаем в то, что набралось бы английской раскладкой */
+function fixLayout(s) {
+  if (!hasCyr(s)) return s;
+  return [...s].map(ch => {
+    const m = KB_RU_EN[ch.toLowerCase()];
+    if (!m) return ch;
+    return ch === ch.toLowerCase() ? m : m.toUpperCase();
+  }).join('');
+}
+/** Английская буква, нажатая на клавиатуре, независимо от раскладки (null — не буква) */
+function latinKey(e) {
+  const k = e.key;
+  if (k && k.length === 1 && /[a-z]/i.test(k)) return k.toLowerCase();
+  const m = k && k.length === 1 ? KB_RU_EN[k.toLowerCase()] : null;
+  if (m && /[a-z]/.test(m)) return m;
+  const c = /^Key([A-Z])$/.exec(e.code || '');
+  return c ? c[1].toLowerCase() : null;
+}
+/** Поле ввода само исправляет раскладку по ходу набора */
+function autoLayout(inp) {
+  if (!inp) return;
+  inp.addEventListener('input', () => {
+    if (!hasCyr(inp.value)) return;
+    const pos = inp.selectionStart;
+    inp.value = fixLayout(inp.value);
+    try { inp.setSelectionRange(pos, pos); } catch (e) { }
+  });
+}
+
 function normAnswer(s) {
   return String(s || '').toLowerCase().replace(/[’‘`´]/g, "'").replace(/[.!?,;:]+$/g, '').replace(/\s+/g, ' ').trim();
 }
@@ -1019,6 +1057,7 @@ function wordRow(w) {
   return `
     <div class="flex items-center gap-3 px-3 md:px-4 py-3 hover:bg-slate-50 dark:hover:bg-white/[.02] cursor-pointer" data-open="${w.id}">
       <button class="icon-btn !w-9 !h-9 shrink-0" data-speak="${w.id}" title="Озвучить" aria-label="Озвучить"><i data-lucide="volume-2" style="width:1rem;height:1rem"></i></button>
+      ${window.WFIMG ? WFIMG.slot(w.base_id, 'wf-pic-xs') : ''}
       <div class="flex-1 min-w-0">
         <div class="flex items-baseline gap-2 flex-wrap">
           <span class="font-bold truncate">${esc(w.word)}</span>
@@ -1340,6 +1379,32 @@ let card = null;                        // состояние текущей к�
 
 function saveSession() { session ? save(LS_SESSION, session) : localStorage.removeItem(LS_SESSION); }
 
+/* ----- Учёт времени тренировки -----
+   Считаем не «от начала до конца», а сумму пауз между действиями.
+   Долгое раздумье над одним словом идёт в зачёт не больше MAX_STEP,
+   а перерыв дольше IDLE_BREAK считается уходом: такая тренировка закрывается сама. */
+const MAX_STEP = 3 * 60 * 1000;     // больше 3 минут на одно слово в статистику не идёт
+const IDLE_BREAK = 20 * 60 * 1000;  // 20 минут без действий — тренировка заброшена
+
+function tickActive() {
+  if (!session || session.finished) return 0;
+  const now = Date.now();
+  if (!session.lastAct) session.lastAct = session.started || now;
+  const gap = Math.max(0, now - session.lastAct);
+  session.active = (session.active || 0) + Math.min(gap, MAX_STEP);
+  session.lastAct = now;
+  return gap;
+}
+/** Вернулись к давно брошенной тренировке — закрываем её, прогресс по отвеченным словам сохраняется */
+function checkIdle() {
+  if (!session || session.finished || !session.lastAct) return false;
+  if (Date.now() - session.lastAct < IDLE_BREAK) return false;
+  if (!session.answers) { session.lastAct = Date.now(); saveSession(); return false; }
+  finishSession(true);
+  toast('Тренировка стояла больше 20 минут — закрыл её, прогресс сохранён', 'info');
+  return true;
+}
+
 function buildQueue(words, mode) {
   if (mode === 'cards') return shuffle(words).map(w => ({ id: w.id, type: 4 }));
   // Новое слово сначала показывается целиком (знакомство), и только потом идёт упражнение
@@ -1397,6 +1462,7 @@ function startSession(words, { label = '', block = null, mode = null, module = n
     pos: 0,
     words: Object.fromEntries(words.map(w => [w.id, { due: isNew(w) || dueOf(w) <= today, isNew: isNew(w), ok: true, errTypes: [] }])),
     started: Date.now(),
+    lastAct: Date.now(), active: 0,
     answers: 0, correct: 0,
     mode: mode || store.settings.mode,
     label, block, module,
@@ -1409,6 +1475,7 @@ function startSession(words, { label = '', block = null, mode = null, module = n
 }
 
 function renderTrain(view) {
+  checkIdle();
   if (session && !session.finished && session.pos >= session.queue.length) finishSession();
   if (session?.finished) return renderReport(view);
   if (session && session.pos < session.queue.length) return renderCard(view);
@@ -1586,13 +1653,14 @@ function renderChoice() {
   $('#exercise').innerHTML = `
     ${promptCard(`
       <div class="text-3xl md:text-4xl font-extrabold tracking-tight break-words">${esc(w.word)}</div>
-      ${w.transcription ? `<div class="text-slate-400 mt-1">${esc(w.transcription)}</div>` : ''}
       <button class="btn btn-ghost !h-10 mt-4" id="sayBtn"><i data-lucide="volume-2"></i>Слушать</button>`)}
     <div class="mt-4 grid gap-2" id="opts">
       ${card.options.map((o, i) => `<button class="option ${optCls(o, w.translation)}" data-o="${i}" ${card.answered ? 'disabled' : ''}>
         <span class="kbd">${i + 1}</span><span class="flex-1">${esc(o)}</span></button>`).join('')}
-    </div>`;
+    </div>
+    ${dunnoBtn()}`;
   $('#sayBtn').onclick = () => tts.speak(w.word);
+  bindDunno();
   $('#opts').onclick = e => {
     const b = e.target.closest('[data-o]'); if (!b || card.answered) return;
     const val = card.options[+b.dataset.o];
@@ -1611,13 +1679,29 @@ function renderPicture() {
     <div class="mt-4 grid gap-2" id="opts">
       ${card.options.map((o, i) => `<button class="option ${optCls(o, w.word)}" data-o="${i}" ${card.answered ? 'disabled' : ''}>
         <span class="kbd">${i + 1}</span><span class="flex-1">${esc(o)}</span></button>`).join('')}
-    </div>`;
+    </div>
+    ${dunnoBtn()}`;
   $('#opts').onclick = e => {
     const b = e.target.closest('[data-o]'); if (!b || card.answered) return;
     const val = card.options[+b.dataset.o];
     answer(val === w.word, val);
   };
+  bindDunno();
 }
+
+/** Кнопка «Не знаю» под вариантами: честнее, чем тыкать наугад — слово сразу уйдёт в повтор */
+function dunnoBtn() {
+  return card.answered ? '' : `<div class="mt-3 flex justify-center">
+    <button class="btn btn-ghost" id="dunnoBtn"><i data-lucide="circle-help"></i>Не знаю</button></div>`;
+}
+function bindDunno() { const b = $('#dunnoBtn'); if (b) b.onclick = skipCard; }
+/** Пропуск без ответа: засчитывается как ошибка, но в отзыве пишем мягче */
+function skipCard() {
+  if (!card || card.answered) return;
+  card.skipped = true;
+  answer(false, '');
+}
+
 /** Неверные варианты для «По картинке»: слова той же части речи, лучше — тоже с картинкой (тогда не угадать по «абстрактности») */
 function picDistractors(w) {
   const target = normAnswer(w.word);
@@ -1660,7 +1744,7 @@ function renderScramble() {
       <button class="btn btn-ghost" id="skipBtn"><i data-lucide="circle-help"></i>Не знаю</button></div>` : ''}`;
   if (card.answered) return;
   $('#tiles').onclick = e => { const b = e.target.closest('[data-t]'); if (b) pickTile(+b.dataset.t, b); };
-  $('#skipBtn').onclick = () => answer(false, '');
+  $('#skipBtn').onclick = skipCard;
 }
 function scrambleTarget() { return card.w.word.replace(/ /g, ''); }
 function pickTile(i, el) {
@@ -1688,8 +1772,7 @@ function renderSpelling() {
   $('#exercise').innerHTML = `
     ${promptCard(`
       <div class="text-sm text-slate-400 font-semibold">Напишите по-английски</div>
-      <div class="text-2xl md:text-3xl font-extrabold mt-1 break-words">${esc(w.translation)}</div>
-      ${w.transcription ? `<div class="text-slate-400 mt-2 text-lg">${esc(w.transcription)}</div>` : ''}`)}
+      <div class="text-2xl md:text-3xl font-extrabold mt-1 break-words">${esc(w.translation)}</div>`)}
     ${typeForm()}`;
   bindTypeForm();
 }
@@ -1710,7 +1793,8 @@ function renderListening() {
       <div class="mt-4 grid grid-cols-2 gap-2" id="opts">
         ${card.options.map((o, i) => `<button class="option justify-center ${optCls(o, w.word)}" data-o="${i}" ${card.answered ? 'disabled' : ''}>
           <span class="kbd">${i + 1}</span><span class="flex-1">${esc(o)}</span></button>`).join('')}
-      </div>` : typeForm(true)}`;
+      </div>
+      ${dunnoBtn()}` : typeForm(true)}`;
   $('#playBtn').onclick = () => tts.speak(w.word);
   $('#slowBtn').onclick = () => tts.speak(w.word, 0.5);
   if (card.showOptions) {
@@ -1719,6 +1803,7 @@ function renderListening() {
       const val = card.options[+b.dataset.o];
       answer(val === w.word, val);
     };
+    bindDunno();
   } else bindTypeForm();
   if (!card.answered && !card.spoken) { card.spoken = true; setTimeout(() => tts.speak(w.word), 300); }
 }
@@ -1817,9 +1902,10 @@ function bindTypeForm() {
   const f = $('#typeForm'); if (!f) return;
   const inp = $('#typeInput');
   setTimeout(() => inp.focus(), 50);
+  autoLayout(inp);
   f.onsubmit = e => {
     e.preventDefault();
-    const val = inp.value;
+    const val = fixLayout(inp.value);
     if (!val.trim()) { inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 400); return; }
     const a = normAnswer(val), b = normAnswer(card.w.word);
     if (a === b) return answer(true, val);
@@ -1827,7 +1913,7 @@ function bindTypeForm() {
     if (b.length >= 6 && levenshtein(a, b) === 1) { card.typo = true; return answer(true, val); }
     answer(false, val);
   };
-  $('#skipBtn').onclick = () => answer(false, '');
+  $('#skipBtn').onclick = skipCard;
   const ob = $('#optsBtn'); if (ob) ob.onclick = () => { card.showOptions = true; renderListening(); icons(); };
   // Подсказка: открывает следующую букву; слово засчитывается, но интервал не растёт
   $('#hintBtn').onclick = () => {
@@ -1860,6 +1946,7 @@ function updateQuietBtn() {
 
 function answer(ok, given) {
   if (card.answered) return;
+  tickActive();
   card.answered = true; card.ok = ok; card.given = given;
   session.answers++;
   if (ok) session.correct++;
@@ -1883,7 +1970,7 @@ function renderFeedback() {
     <div class="mt-4 rounded-3xl p-5 pop ${ok ? 'bg-brand-500/10 border border-brand-500/30' : 'bg-rose-500/10 border border-rose-500/30'}">
       <div class="flex items-center gap-2 font-extrabold ${ok ? 'text-brand-600 dark:text-brand-300' : 'text-rose-600 dark:text-rose-300'}">
         <i data-lucide="${ok ? 'circle-check' : 'circle-x'}"></i>
-        ${ok ? (card.hinted ? 'Верно, с подсказкой — повторим скоро' : card.typo ? 'Верно, но с опечаткой' : pickPraise()) : 'Неверно'}
+        ${ok ? (card.hinted ? 'Верно, с подсказкой — повторим скоро' : card.typo ? 'Верно, но с опечаткой' : pickPraise()) : card.skipped ? 'Пока не знаем — запомним и повторим' : 'Неверно'}
       </div>
       <div class="mt-3 flex items-center gap-3">
         <button class="icon-btn !w-9 !h-9 shrink-0" data-say="${esc(w.word)}" aria-label="Озвучить"><i data-lucide="volume-2"></i></button>
@@ -1905,6 +1992,7 @@ function renderFeedback() {
 function pickPraise() { return ['Верно!', 'Отлично!', 'Правильно!', 'Так держать!'][Math.floor(Math.random() * 4)]; }
 
 function nextCard() {
+  tickActive();
   session.pos++;
   card = null;
   if (session.pos >= session.queue.length) finishSession();
@@ -1913,6 +2001,7 @@ function nextCard() {
 }
 
 async function quitSession() {
+  tickActive();
   const done = session.answers;
   if (!done) { session = null; card = null; saveSession(); location.hash = '#/train'; render(); return; }
   if (await confirmDialog('Завершить тренировку? Прогресс по уже отвеченным словам сохранится.', 'Завершить')) {
@@ -1938,7 +2027,7 @@ function finishSession(early = false) {
   session.report = {
     words, ok,
     accuracy: session.answers ? Math.round((session.correct / session.answers) * 100) : 0,
-    seconds: Math.round((Date.now() - session.started) / 1000),
+    seconds: Math.round((session.active || Math.min(Date.now() - session.started, MAX_STEP)) / 1000),
     ids: [...answeredIds]
   };
   // статистика за сегодня
@@ -2038,8 +2127,10 @@ document.addEventListener('keydown', e => {
   if ((t === 0 || t === 6 || (t === 3 && card.showOptions)) && /^[1-4]$/.test(e.key)) {
     const b = $(`#opts [data-o="${+e.key - 1}"]`); if (b) b.click();
   }
+  if (e.key === '0' && $('#dunnoBtn')) { e.preventDefault(); skipCard(); }
   if (t === 1 && e.key.length === 1 && !e.ctrlKey && !e.metaKey) {
-    const i = card.tiles.findIndex(x => !x.used && x.ch.toLowerCase() === e.key.toLowerCase());
+    const key = latinKey(e) || e.key.toLowerCase();   // буква не зависит от раскладки
+    const i = card.tiles.findIndex(x => !x.used && x.ch.toLowerCase() === key);
     const need = scrambleTarget()[card.built.length];
     if (i >= 0 && card.tiles[i].ch.toLowerCase() === need.toLowerCase()) pickTile(i);
     else if (i >= 0 || /\p{L}/u.test(e.key)) {
@@ -2597,7 +2688,9 @@ function boot() {
   updateSyncBadge();
   if (sync.enabled() && store.settings.autoSync) setTimeout(() => sync.run(), 400);
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') sync.schedule(800);
+    if (document.visibilityState !== 'visible') return;
+    sync.schedule(800);
+    if (route.name === 'train' && checkIdle()) { card = null; render(); }
   });
   window.addEventListener('online', () => sync.schedule(800));
   setInterval(() => { if (sync.state === 'ok') updateSyncBadge(); }, 60000);

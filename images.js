@@ -100,6 +100,11 @@ window.WFIMG = (() => {
     return `<div class="wf-pic ${kind(key) === 'emoji' ? 'is-emoji' : ''} ${cls}" data-img="${esc(key)}"></div>`;
   }
 
+  /** Место под картинку для списков: если картинки нет — пустой отступ той же ширины (список не «пляшет») */
+  function slot(key, cls = '') {
+    return has(key) ? box(key, cls) : `<div class="${cls}"></div>`;
+  }
+
   function hydrate(root) {
     const list = root.matches && root.matches('[data-img]') ? [root] : [...root.querySelectorAll('[data-img]')];
     for (const el of list) {
@@ -122,5 +127,5 @@ window.WFIMG = (() => {
   // Ключи слов с картинкой (для упражнения «По картинке» и подбора вариантов)
   const keys = () => [...new Set([...Object.keys(D.items), ...own])];
 
-  return { has, kind, url, box, setOwn, delOwn, isOwn: k => own.has(k), downloadAll, totalMB, ready, keys, count: () => Object.keys(D.items).length };
+  return { has, kind, url, box, slot, setOwn, delOwn, isOwn: k => own.has(k), downloadAll, totalMB, ready, keys, count: () => Object.keys(D.items).length };
 })();
