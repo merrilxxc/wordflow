@@ -1106,6 +1106,25 @@ function exampleBlock(en, ua, word) {
     </div>
   </div>`;
 }
+/** Примеры к слову: на телефоне сразу виден один, остальные — по кнопке */
+function examplesBlock(w, cls = 'mt-4') {
+  const list = [[w.example1_en, w.example1_ua], [w.example2_en, w.example2_ua], [w.example3_en, w.example3_ua]].filter(e => e[0]);
+  if (!list.length) return '';
+  const first = exampleBlock(list[0][0], list[0][1], w.word);
+  const rest = list.slice(1).map(e => exampleBlock(e[0], e[1], w.word)).join('');
+  if (!rest) return `<div class="${cls} space-y-2">${first}</div>`;
+  return `<div class="${cls} space-y-2">
+    ${first}
+    <div class="hidden md:block space-y-2" data-more>${rest}</div>
+    <button type="button" class="btn btn-ghost w-full !h-10 md:hidden" data-more-btn>
+      <i data-lucide="chevron-down"></i>Ещё ${list.length - 1} ${plural(list.length - 1, 'пример', 'примера', 'примеров')}</button>
+  </div>`;
+}
+function bindMore(root) {
+  const btn = root.querySelector('[data-more-btn]'), box = root.querySelector('[data-more]');
+  if (!btn || !box) return;
+  btn.onclick = () => { box.classList.remove('hidden'); btn.remove(); };
+}
 function bindSay(root) {
   $$('[data-say]', root).forEach(b => b.onclick = e => { e.stopPropagation(); tts.speak(b.dataset.say, Math.min(store.settings.rate, 0.95)); });
 }
@@ -1421,10 +1440,10 @@ function buildQueue(words, mode) {
 function renderIntro() {
   const { w } = card;
   $('#exercise').innerHTML = `
-    <div class="card p-6 md:p-8 pop">
+    <div class="card p-5 md:p-8 pop">
       <div class="text-center">
         <div class="inline-flex items-center gap-1.5 text-xs font-bold text-violet-500 bg-violet-500/10 px-2.5 py-1 rounded-full"><i data-lucide="sparkles" style="width:.85rem;height:.85rem"></i>Новое слово${w.level ? ' · ' + esc(w.level) : ''}</div>
-        ${window.WFIMG ? WFIMG.box(w.base_id, 'wf-pic-lg mx-auto mt-4') : ''}
+        ${window.WFIMG ? WFIMG.box(w.base_id, 'wf-pic-intro mx-auto mt-4') : ''}
         <div class="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight break-words">${esc(w.word)}</div>
         ${w.transcription ? `<div class="text-slate-400 mt-1">${esc(w.transcription)}</div>` : ''}
         <div class="mt-3 flex justify-center gap-2">
@@ -1434,13 +1453,16 @@ function renderIntro() {
         <div class="mt-4 text-2xl font-bold text-brand-600 dark:text-brand-300">${esc(w.translation)}</div>
         ${w.pos ? `<div class="text-xs text-slate-400 mt-1">${esc(POS_NAMES[w.pos] || w.pos)}${w.topic ? ' · ' + esc(topicName(w.topic)) : ''}</div>` : ''}
       </div>
-      ${w.example1_en || w.example2_en ? `<div class="mt-5 space-y-2">${exampleBlock(w.example1_en, w.example1_ua, w.word)}${exampleBlock(w.example2_en, w.example2_ua, w.word)}${exampleBlock(w.example3_en, w.example3_ua, w.word)}</div>` : ''}
+      ${examplesBlock(w, 'mt-5')}
     </div>
-    <div class="mt-4 grid grid-cols-2 gap-2">
-      <button class="btn btn-ghost btn-lg" id="knowIntro"><i data-lucide="check-check"></i>Уже знаю</button>
-      <button class="btn btn-primary btn-lg" id="nextIntro">Запомнил <i data-lucide="arrow-right"></i></button>
+    <div class="act-bar mt-4">
+      <div class="grid grid-cols-2 gap-2">
+        <button class="btn btn-ghost btn-lg" id="knowIntro"><i data-lucide="check-check"></i>Уже знаю</button>
+        <button class="btn btn-primary btn-lg" id="nextIntro">Запомнил <i data-lucide="arrow-right"></i></button>
+      </div>
     </div>`;
   bindSay($('#exercise'));
+  bindMore($('#exercise'));
   $('#slowIntro').onclick = () => tts.speak(w.word, 0.55);
   $('#nextIntro').onclick = nextCard;
   // «Уже знаю»: слово сразу уходит в выученные, его упражнения в этой сессии пропускаются
@@ -1634,17 +1656,18 @@ function renderCard(view) {
         <i data-lucide="${ex.icon}" style="width:.95rem;height:.95rem"></i>${ex.name}${item.retry ? ' · <span class="text-amber-500">повтор ошибки</span>' : ''}
         ${session.label ? `<span class="ml-auto normal-case tracking-normal text-brand-500 truncate">${esc(session.label)}</span>` : ''}
       </div>
-      <div id="exercise" class="mt-3"></div>
+      <div id="exercise" class="mt-3${card.answered ? ' is-answered' : ''}"></div>
       <div id="feedback"></div>
     </div>`;
   $('#quitBtn').onclick = quitSession;
+  if (!card.answered) window.scrollTo({ top: 0 });
   [renderChoice, renderScramble, renderSpelling, renderListening, renderFlashcard, renderIntro, renderPicture][item.type]();
   if (card.answered && (item.type < 4 || item.type === 6)) renderFeedback();
   icons();
 }
 
 function promptCard(inner) {
-  return `<div class="card p-6 md:p-8 text-center pop">${inner}</div>`;
+  return `<div class="card p-5 md:p-8 text-center pop">${inner}</div>`;
 }
 
 // 1) Выбор перевода
@@ -1822,8 +1845,7 @@ function renderFlashcard() {
     <div class="text-2xl md:text-3xl font-extrabold break-words">${esc(en ? w.translation : w.word)}</div>
     ${!en && w.transcription ? `<div class="text-slate-400 mt-1">${esc(w.transcription)}</div>` : ''}
     ${!en ? speakBtn : `<div class="text-sm text-slate-400 mt-1">${esc(w.word)}</div>`}
-    ${w.example1_en || w.example2_en ? `<div class="mt-4 space-y-2 w-full text-left">
-      ${exampleBlock(w.example1_en, w.example1_ua, w.word)}${exampleBlock(w.example2_en, w.example2_ua, w.word)}${exampleBlock(w.example3_en, w.example3_ua, w.word)}</div>` : ''}`;
+    <div class="w-full text-left">${examplesBlock(w, 'mt-4')}</div>`;
 
   $('#exercise').innerHTML = `
     <div class="flip-scene" id="flipScene">
@@ -1835,15 +1857,18 @@ function renderFlashcard() {
         <div class="flip-face flip-back card p-5 md:p-7 text-center">${back}</div>
       </div>
     </div>
-    <div class="mt-4 grid grid-cols-2 gap-2 transition-opacity ${card.flipped ? '' : 'opacity-0 pointer-events-none'}" id="gradeBtns">
-      <button class="btn btn-lg btn-danger" id="forgotBtn"><i data-lucide="thumbs-down"></i>Не помню</button>
-      <button class="btn btn-lg btn-primary" id="knowBtn"><i data-lucide="thumbs-up"></i>Помню</button>
+    <div class="act-bar mt-4">
+      <div class="grid grid-cols-2 gap-2 transition-opacity ${card.flipped ? '' : 'opacity-0 pointer-events-none'}" id="gradeBtns">
+        <button class="btn btn-lg btn-danger" id="forgotBtn"><i data-lucide="thumbs-down"></i>Не помню</button>
+        <button class="btn btn-lg btn-primary" id="knowBtn"><i data-lucide="thumbs-up"></i>Помню</button>
+      </div>
     </div>
     <p class="text-center text-xs text-slate-400 mt-3">${card.flipped
       ? '<span class="md:hidden">Свайп вправо — помню, влево — не помню</span><span class="hidden md:inline">→ помню · ← не помню</span>'
       : '<span class="hidden md:inline">Пробел — перевернуть</span>'}</p>`;
 
   bindSay($('#exercise'));
+  bindMore($('#exercise'));
   $('#forgotBtn').onclick = () => gradeCard(false);
   $('#knowBtn').onclick = () => gradeCard(true);
 
@@ -1967,7 +1992,7 @@ function answer(ok, given) {
 function renderFeedback() {
   const { w, ok } = card;
   $('#feedback').innerHTML = `
-    <div class="mt-4 rounded-3xl p-5 pop ${ok ? 'bg-brand-500/10 border border-brand-500/30' : 'bg-rose-500/10 border border-rose-500/30'}">
+    <div class="mt-4 rounded-3xl p-4 md:p-5 pop ${ok ? 'bg-brand-500/10 border border-brand-500/30' : 'bg-rose-500/10 border border-rose-500/30'}">
       <div class="flex items-center gap-2 font-extrabold ${ok ? 'text-brand-600 dark:text-brand-300' : 'text-rose-600 dark:text-rose-300'}">
         <i data-lucide="${ok ? 'circle-check' : 'circle-x'}"></i>
         ${ok ? (card.hinted ? 'Верно, с подсказкой — повторим скоро' : card.typo ? 'Верно, но с опечаткой' : pickPraise()) : card.skipped ? 'Пока не знаем — запомним и повторим' : 'Неверно'}
@@ -1980,14 +2005,20 @@ function renderFeedback() {
         </div>
         ${window.WFIMG && card.item.type !== 6 ? WFIMG.box(w.base_id, 'wf-pic-sm shrink-0') : ''}
       </div>
-      ${w.example1_en || w.example2_en ? `<div class="mt-4 space-y-2">
-        ${exampleBlock(w.example1_en, w.example1_ua, w.word)}
-        ${exampleBlock(w.example2_en, w.example2_ua, w.word)}${exampleBlock(w.example3_en, w.example3_ua, w.word)}</div>` : ''}
-      <button class="btn btn-primary btn-lg w-full mt-4" id="nextBtn">Далее <i data-lucide="arrow-right"></i></button>
+      ${examplesBlock(w, 'mt-4')}
+    </div>
+    <div class="act-bar mt-3">
+      <button class="btn btn-primary btn-lg w-full" id="nextBtn">Далее <i data-lucide="arrow-right"></i></button>
     </div>`;
   bindSay($('#feedback'));
+  bindMore($('#feedback'));
   $('#nextBtn').onclick = nextCard;
-  setTimeout(() => { $('#nextBtn')?.focus({ preventScroll: true }); $('#feedback')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); }, 60);
+  // страница почти всегда помещается целиком: подкручиваем только если разбор не влез
+  setTimeout(() => {
+    $('#nextBtn')?.focus({ preventScroll: true });
+    const r = $('#feedback')?.getBoundingClientRect();
+    if (r && r.bottom > innerHeight - 8) $('#feedback').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 60);
 }
 function pickPraise() { return ['Верно!', 'Отлично!', 'Правильно!', 'Так держать!'][Math.floor(Math.random() * 4)]; }
 

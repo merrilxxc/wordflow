@@ -188,9 +188,37 @@ mark.hl { background: rgb(31 165 131 / .2); color: inherit; border-radius: .3rem
 .wf-pic.is-emoji { background: rgba(31, 165, 131, .08); }
 .wf-pic.is-emoji img { object-fit: contain; padding: 14%; }
 .wf-pic-lg { width: 100%; max-width: 300px; }
+.wf-pic-intro { width: 100%; max-width: 300px; }
 .wf-pic-md { width: 100%; max-width: 260px; }
 .wf-pic-sm { width: 88px; border-radius: .75rem; }
 .wf-pic-sm.is-emoji img { padding: 10%; }
 /* миниатюра в списках словаря; пустое место той же ширины держит колонку ровной */
 .wf-pic-xs { width: 46px; aspect-ratio: 4 / 3; border-radius: .6rem; flex: none; }
 .wf-pic-xs.is-emoji img { padding: 8%; }
+
+/* ===== Компактная тренировка на телефоне ===== */
+/* Главная кнопка шага прилипает к низу экрана — её не нужно искать прокруткой */
+.act-bar {
+  position: sticky; z-index: 20;
+  bottom: calc(env(safe-area-inset-bottom) + 4.25rem);
+  margin-inline: -1rem; padding: .6rem 1rem .25rem;
+  background: linear-gradient(to top, rgb(248 250 252 / .98) 62%, rgb(248 250 252 / 0));
+}
+.dark .act-bar { background: linear-gradient(to top, rgb(11 16 32 / .98) 62%, rgb(11 16 32 / 0)); }
+@media (min-width: 768px) {
+  .act-bar { position: static; margin-inline: 0; padding: 0; background: none; }
+}
+
+/* После ответа вопрос сжимается, чтобы разбор слова был виден сразу */
+#feedback { scroll-margin-top: 4.5rem; }
+@media (max-width: 767px) {
+  #exercise.is-answered > .card { padding: .85rem 1rem; }
+  #exercise.is-answered .text-3xl, #exercise.is-answered .text-2xl { font-size: 1.35rem; line-height: 1.75rem; }
+  #exercise.is-answered .wf-pic-lg { max-width: 140px; }
+  #exercise.is-answered .mt-6 { margin-top: .9rem; }
+  #exercise.is-answered .mt-5 { margin-top: .7rem; }
+  /* варианты, которых не выбирали, после ответа не нужны */
+  #exercise.is-answered .option.opacity-50 { display: none; }
+  /* карточка знакомства: поменьше картинка и отступы */
+  .wf-pic-intro { max-width: 190px; }
+}
