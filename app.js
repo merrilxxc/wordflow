@@ -108,6 +108,9 @@ const DEFAULT_SETTINGS = {
   courseTopics: [],       // темы курса (пусто — все)
   quiet: false,           // тихий режим: без звука, без аудирования
   pics: true,             // картинки к словам и упражнение «По картинке»
+  world3d: 'on',          // остров прогресса: on | off
+  worldQ: 'auto',         // качество острова: auto | low | mid | high
+  worldSeason: true,      // времена года на острове
   onboarded: false        // приветствие пройдено
 };
 
@@ -796,7 +799,7 @@ const NAV = [
   { name: 'stats', label: 'Прогресс', icon: 'chart-column' },
   { name: 'settings', label: 'Ещё', icon: 'menu' }
 ];
-const HIDDEN_ROUTES = ['base', 'cloud'];   // экраны без пункта в меню (открываются из «Ещё»)
+const HIDDEN_ROUTES = ['base', 'cloud', 'world'];   // экраны без пункта в меню (открываются из «Ещё»)
 const route = { name: 'dict' };
 
 function renderNav() {
@@ -815,9 +818,10 @@ function render() {
   if (typeof textAudio !== 'undefined' && textAudio.id && route.name !== 'practice') textAudio.reset();
   renderNav();
   const view = $('#view');
-  const fn = { course: renderCourse, dict: renderDict, train: renderTrain, practice: renderPractice, stats: renderStats, base: renderBase, settings: renderSettings }[route.name] || renderDict;
+  const fn = { course: renderCourse, dict: renderDict, train: renderTrain, practice: renderPractice, stats: renderStats, base: renderBase, settings: renderSettings, world: renderWorld }[route.name] || renderDict;
   fn(view);
   icons();
+  if (typeof worldSync === 'function') { worldSync(); worldCheckUnlocks(); }
 }
 
 function onRoute() {
@@ -1528,6 +1532,7 @@ function renderTrainStart(view) {
       <button class="btn btn-primary btn-lg w-full" id="startBtn" ${available ? '' : 'disabled'}><i data-lucide="play"></i>${plan.due + plan.fresh ? 'Начать' : 'Дополнительная практика'}</button>
       ${!available ? '<p class="text-sm text-center text-slate-500 mt-2">Все слова отмечены как выученные. Верните часть слов в работу в словаре.</p>' : ''}
     </div>
+    ${typeof worldStrip === 'function' ? worldStrip() : ''}
     ${recoBlock()}
     ${s.quiet ? `<div class="mt-3 rounded-2xl bg-amber-500/10 text-amber-700 dark:text-amber-300 text-sm px-4 py-3 flex items-center gap-2"><i data-lucide="headphone-off"></i>Тихий режим: без автоозвучки, аудирование заменено написанием.</div>` : ''}
 
@@ -2210,6 +2215,7 @@ function renderStats(view) {
     </div>
 
     <div class="mt-5">${analysisSection()}</div>
+    ${typeof worldBlock === 'function' ? worldBlock() : ''}
 
     <div class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-3">
       ${heroTile('Серия', st, plural(st, 'день подряд', 'дня подряд', 'дней подряд'), 'flame', 'text-orange-500')}
@@ -2605,6 +2611,24 @@ function renderSettings(view) {
     </section>
 
     <section class="card p-5 mt-4 space-y-5">
+      <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="map" class="text-brand-500"></i>Остров прогресса</h2>
+      <label class="flex items-center justify-between gap-4">
+        <span><span class="text-sm font-bold block">Показывать остров</span><span class="text-xs text-slate-500 dark:text-slate-400">Трёхмерный мир на «Прогрессе» и «Учить». Растёт от выученных слов и закрытых модулей</span></span>
+        <input type="checkbox" id="worldChk" class="w-5 h-5 accent-brand-500" ${s.world3d !== 'off' ? 'checked' : ''}></label>
+      <div>
+        <div class="text-sm font-bold mb-2">Качество графики</div>
+        <div class="flex gap-2 flex-wrap" id="worldQSeg">
+          ${[['auto', 'Автоматически'], ['low', 'Низкое'], ['mid', 'Среднее'], ['high', 'Высокое']]
+            .map(([v, l]) => `<button class="chip ${(s.worldQ || 'auto') === v ? 'is-active' : ''}" data-q="${v}">${l}</button>`).join('')}
+        </div>
+        <div class="text-xs text-slate-500 dark:text-slate-400 mt-2">Если на телефоне подтормаживает — поставьте «Низкое»: пропадут трава и тени, остальное останется</div>
+      </div>
+      <label class="flex items-center justify-between gap-4">
+        <span><span class="text-sm font-bold block">Времена года</span><span class="text-xs text-slate-500 dark:text-slate-400">Цвет листвы и травы меняется по календарю: весна, лето, осень, зима</span></span>
+        <input type="checkbox" id="worldSeasonChk" class="w-5 h-5 accent-brand-500" ${s.worldSeason !== false ? 'checked' : ''}></label>
+    </section>
+
+    <section class="card p-5 mt-4 space-y-5">
       <h2 class="font-extrabold flex items-center gap-2"><i data-lucide="palette" class="text-brand-500"></i>Оформление</h2>
       <div>
         <div class="text-sm font-bold mb-2">Тема оформления</div>
@@ -2661,6 +2685,22 @@ function renderSettings(view) {
   $('#perDaySeg2').onclick = e => { const b = e.target.closest('[data-n]'); if (!b) return; s.newPerDay = +b.dataset.n; store.saveSettings(); render(); };
   $('#quietChk').onchange = e => setQuiet(e.target.checked);
   $('#picsChk').onchange = e => { s.pics = e.target.checked; store.saveSettings(); toast(s.pics ? 'Картинки включены' : 'Картинки выключены', 'info'); };
+  $('#worldChk').onchange = e => {
+    s.world3d = e.target.checked ? 'on' : 'off'; store.saveSettings();
+    if (s.world3d === 'off' && WORLD.engine) { WORLD.engine.dispose(); WORLD.engine = null; }
+    toast(s.world3d === 'on' ? 'Остров включён' : 'Остров выключен', 'info');
+  };
+  $('#worldQSeg').onclick = e => {
+    const b = e.target.closest('[data-q]'); if (!b) return;
+    s.worldQ = b.dataset.q; store.saveSettings();
+    if (WORLD.engine) { WORLD.engine.dispose(); WORLD.engine = null; }
+    render();
+  };
+  $('#worldSeasonChk').onchange = e => {
+    s.worldSeason = e.target.checked; store.saveSettings();
+    if (WORLD.engine) { WORLD.engine.dispose(); WORLD.engine = null; }
+    toast(s.worldSeason ? 'Времена года включены' : 'Остров всегда летний', 'info');
+  };
   const dl = $('#picsDl');
   if (dl) dl.onclick = async () => {
     dl.disabled = true;

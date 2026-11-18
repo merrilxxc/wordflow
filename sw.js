@@ -1,8 +1,8 @@
 /* Service Worker WordFlow: офлайн-работа и быстрый запуск.
    При обновлении файлов приложения увеличьте номер версии ниже. */
-const VERSION = 'wordflow-v13';
+const VERSION = 'wordflow-v14';
 const APP_SHELL = [
-  './', './index.html', './styles.css', './app.js', './practice.js', './learn.js', './images.js', './cloud.js', './config.js',
+  './', './index.html', './styles.css', './app.js', './practice.js', './learn.js', './images.js', './world.js', './cloud.js', './config.js',
   './data/base.js', './data/ex3.js', './data/hints.js', './data/sentences.js', './data/texts.js', './data/ua.js', './data/images.js', './manifest.json',
   './icons/icon.svg', './icons/icon-192.png', './icons/icon-512.png'
 ];

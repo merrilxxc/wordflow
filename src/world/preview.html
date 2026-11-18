@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ru"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>WordFlow — остров: проверка</title>
+<style>
+  *{box-sizing:border-box} html,body{margin:0;height:100%;background:#0b1020;color:#e8eef7;
+    font:14px/1.4 Manrope,system-ui,sans-serif;overflow:hidden}
+  #cv{position:fixed;inset:0}
+  .panel{position:fixed;left:10px;top:10px;z-index:5;background:rgba(10,16,32,.72);backdrop-filter:blur(8px);
+    border:1px solid rgba(255,255,255,.1);border-radius:14px;padding:12px 14px;max-width:min(92vw,330px)}
+  .row{display:flex;gap:8px;align-items:center;margin:6px 0;flex-wrap:wrap}
+  input[type=range]{flex:1;min-width:120px}
+  button{background:#13856b;color:#fff;border:0;border-radius:10px;padding:7px 11px;font:inherit;font-weight:700}
+  button.g{background:rgba(255,255,255,.12)}
+  #fps{position:fixed;right:10px;top:10px;z-index:5;background:rgba(10,16,32,.72);padding:8px 12px;
+    border-radius:12px;font-weight:800;font-variant-numeric:tabular-nums}
+  #card{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;display:none;
+    background:rgba(10,16,32,.9);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:14px 16px;
+    max-width:min(94vw,420px)}
+  .mut{opacity:.65;font-size:12.5px}
+</style></head><body>
+<div id="cv"></div>
+<div id="fps">— fps</div>
+<div class="panel">
+  <div style="font-weight:800;margin-bottom:6px">Остров WordFlow</div>
+  <div class="row"><span style="width:86px">Размер</span><input id="sz" type="range" min="0" max="100" value="38"><b id="szv">38</b></div>
+  <div class="row"><span style="width:86px">Здоровье</span><input id="hp" type="range" min="0" max="100" value="100"><b id="hpv">100</b></div>
+  <div class="row"><span style="width:86px">Модулей</span><input id="md" type="range" min="0" max="48" value="10"><b id="mdv">10</b></div>
+  <div class="row">
+    <button id="night" class="g">День/ночь</button>
+    <button id="fly" class="g">Облёт</button>
+    <button id="seed" class="g">Другой остров</button>
+  </div>
+  <div class="row" id="qrow"></div>
+  <div class="row" id="srow"></div>
+  <div class="mut">Тап по объекту — карточка. Призрачные силуэты — следующие награды.</div>
+</div>
+<div id="card"></div>
+<script src="../../world3d.js"></script>
+<script>
+const mods = [];
+const LV = [['A1',9],['A2',8],['B1',8],['B2',8],['C1',15]];
+LV.forEach(([l,n])=>{ for(let i=1;i<=n;i++) mods.push({id:`${l}-${i}`,level:l,n:i}); });
+const defs = WF3D.defsFromModules(mods);
+
+let eng = null, seed = 20261118, season = WF3D.seasonOf(), q = 'high';
+const $ = s => document.querySelector(s);
+
+function card(ev){
+  const d = ev.def, el = $('#card');
+  el.style.display='block';
+  el.innerHTML = ev.unlocked
+    ? `<div style="font-weight:800;font-size:16px">${d.name}</div>
+       <div class="mut">${d.level}-${d.n} · ${d.moduleTopic}</div>
+       <div style="margin-top:8px">${d.word} <span class="mut">${d.ipa}</span> — ${d.ru}</div>`
+    : `<div style="font-weight:800;font-size:16px">Ещё закрыто: ${d.name}</div>
+       <div class="mut">Откроется за модуль ${d.level}-${d.n} · ${d.moduleTopic}</div>
+       <div style="margin-top:8px"><button>Пройти модуль</button></div>`;
+  clearTimeout(card.t); card.t = setTimeout(()=>el.style.display='none', 5000);
+}
+
+function make(){
+  if (eng) eng.dispose();
+  eng = WF3D.create({ quality: q, seed, onPick: card });
+  eng.mount($('#cv'), 'full');
+  eng.build(defs, { season, seed });
+  apply();
+}
+function apply(){
+  const known = Math.round(Math.pow(+$('#sz').value/100, 1/0.75) * 2500);
+  eng.setState({ known, mods: +$('#md').value, hp: +$('#hp').value, total: defs.length });
+  eng.fit(false);
+}
+for (const [id,lbl] of [['sz','szv'],['hp','hpv'],['md','mdv']])
+  $('#'+id).oninput = e => { $('#'+lbl).textContent = e.target.value; apply(); };
+$('#night').onclick = () => eng.toggleNight();
+$('#fly').onclick = () => eng.setFly(true);
+$('#seed').onclick = () => { seed = Math.floor(Math.random()*1e9); make(); };
+$('#qrow').innerHTML = ['low','mid','high'].map(x=>`<button class="g" data-q="${x}">${x}</button>`).join('');
+$('#qrow').onclick = e => { const b=e.target.closest('[data-q]'); if(!b) return; q=b.dataset.q; make(); };
+$('#srow').innerHTML = Object.keys(WF3D.SEASONS).map(k=>`<button class="g" data-s="${k}">${WF3D.SEASONS[k].name}</button>`).join('');
+$('#srow').onclick = e => { const b=e.target.closest('[data-s]'); if(!b) return; season=b.dataset.s; make(); };
+
+let n=0, t0=performance.now();
+(function loop(){ requestAnimationFrame(loop); n++; const t=performance.now();
+  if (t-t0>700){ $('#fps').textContent = Math.round(n/(t-t0)*1000)+' fps'; n=0; t0=t; } })();
+make();
+window.__eng = () => eng;
+</script></body></html>
